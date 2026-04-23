@@ -1,6 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import logoImage from "./assets/logo.png";
 
 const SHEET_ID = "1Uyho2Vk0j45oAPiYu0GLCMHn7be3E7h92-bREAS443s";
 const SHEET_NAME = "ROOC Auction Roulette";
@@ -483,15 +485,14 @@ export default function HomePage() {
               and refresh on demand without touching the source sheet.
             </p>
           </div>
-          <div className="hero-stats">
-            <article className="stat">
-              <span className="stat-label">Visible Rows</span>
-              <strong className="stat-value">{filteredRows.length}</strong>
-            </article>
-            <article className="stat">
-              <span className="stat-label">Columns</span>
-              <strong className="stat-value">{columns.length}</strong>
-            </article>
+          <div className="hero-logo">
+            <Image
+              src={logoImage}
+              alt="Outlast logo"
+              width={400}
+              height={400}
+              priority
+            />
           </div>
         </div>
       </section>
