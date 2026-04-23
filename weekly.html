@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ROOC Auction Roulette Viewer</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--bg: #f5efe3;
+			--bg-accent: #e8d6b6;
+			--panel: rgba(255, 251, 244, 0.82);
+			--panel-strong: rgba(255, 248, 236, 0.96);
+			--text: #1f3527;
+			--muted: #5f6d61;
+			--line: rgba(31, 53, 39, 0.12);
+			--brand: #1f6a52;
+			--brand-2: #c46b2d;
+			--brand-3: #f0b44d;
+			--shadow: 0 24px 60px rgba(62, 41, 14, 0.16);
+			--radius-xl: 28px;
+			--radius-lg: 18px;
+			--radius-sm: 12px;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			font-family: "Space Grotesk", sans-serif;
+			color: var(--text);
+			background:
+				radial-gradient(circle at top left, rgba(240, 180, 77, 0.42), transparent 30%),
+				radial-gradient(circle at top right, rgba(31, 106, 82, 0.22), transparent 32%),
+				linear-gradient(160deg, #fbf6ec 0%, var(--bg) 52%, #e7dcc7 100%);
+			overflow-x: hidden;
+		}
+
+		body::before,
+		body::after {
+			content: "";
+			position: fixed;
+			inset: auto;
+			width: 34vw;
+			height: 34vw;
+			border-radius: 50%;
+			filter: blur(28px);
+			opacity: 0.5;
+			pointer-events: none;
+			z-index: 0;
+		}
+
+		body::before {
+			top: -10vw;
+			right: -10vw;
+			background: rgba(240, 180, 77, 0.26);
+		}
+
+		body::after {
+			left: -10vw;
+			bottom: -14vw;
+			background: rgba(31, 106, 82, 0.18);
+		}
+
+		.shell {
+			position: relative;
+			z-index: 1;
+			width: min(1180px, calc(100% - 32px));
+			margin: 0 auto;
+			padding: 32px 0 56px;
+		}
+
+		.hero {
+			position: relative;
+			overflow: hidden;
+			padding: 28px;
+			border-radius: var(--radius-xl);
+			background: linear-gradient(135deg, rgba(31, 106, 82, 0.92), rgba(22, 53, 41, 0.9));
+			color: #fff8ef;
+			box-shadow: var(--shadow);
+			animation: rise 700ms ease-out;
+		}
+
+		.hero::after {
+			content: "";
+			position: absolute;
+			right: -30px;
+			top: -30px;
+			width: 220px;
+			height: 220px;
+			border-radius: 38% 62% 58% 42% / 46% 43% 57% 54%;
+			background: radial-gradient(circle, rgba(240, 180, 77, 0.95) 0%, rgba(196, 107, 45, 0.3) 70%, transparent 72%);
+			opacity: 0.8;
+		}
+
+		.eyebrow {
+			display: inline-flex;
+			align-items: center;
+			gap: 10px;
+			padding: 8px 14px;
+			border: 1px solid rgba(255, 248, 239, 0.18);
+			border-radius: 999px;
+			background: rgba(255, 248, 239, 0.08);
+			font-size: 0.82rem;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+		}
+
+		h1 {
+			margin: 18px 0 12px;
+			max-width: 10ch;
+			font-family: "Fraunces", serif;
+			font-size: clamp(2.5rem, 5vw, 4.6rem);
+			line-height: 0.96;
+			letter-spacing: -0.04em;
+		}
+
+		.hero p {
+			position: relative;
+			z-index: 1;
+			max-width: 60ch;
+			margin: 0;
+			font-size: 1rem;
+			line-height: 1.7;
+			color: rgba(255, 248, 239, 0.88);
+		}
+
+		.hero-grid {
+			display: grid;
+			gap: 18px;
+			grid-template-columns: 1.5fr 0.9fr;
+			align-items: end;
+		}
+
+		.hero-stats {
+			display: grid;
+			gap: 14px;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			margin-top: 22px;
+		}
+
+		.stat {
+			padding: 16px;
+			border-radius: var(--radius-lg);
+			background: rgba(255, 248, 239, 0.1);
+			border: 1px solid rgba(255, 248, 239, 0.16);
+			backdrop-filter: blur(10px);
+		}
+
+		.stat-label {
+			display: block;
+			font-size: 0.78rem;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: rgba(255, 248, 239, 0.66);
+		}
+
+		.stat-value {
+			display: block;
+			margin-top: 8px;
+			font-size: clamp(1.6rem, 3vw, 2.3rem);
+			font-weight: 700;
+			letter-spacing: -0.04em;
+		}
+
+		.panel {
+			margin-top: 22px;
+			padding: 22px;
+			border: 1px solid rgba(255, 255, 255, 0.5);
+			border-radius: var(--radius-xl);
+			background: var(--panel);
+			box-shadow: var(--shadow);
+			backdrop-filter: blur(16px);
+			animation: rise 850ms ease-out;
+		}
+
+		.controls {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 14px;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 18px;
+		}
+
+		.search-wrap {
+			flex: 1 1 280px;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+			padding: 14px 16px;
+			border: 1px solid var(--line);
+			border-radius: 999px;
+			background: rgba(255, 255, 255, 0.62);
+		}
+
+		.search-wrap input {
+			width: 100%;
+			border: 0;
+			outline: 0;
+			font: inherit;
+			color: var(--text);
+			background: transparent;
+		}
+
+		.button-row {
+			display: flex;
+			gap: 12px;
+			flex-wrap: wrap;
+		}
+
+		button,
+		.chip {
+			border: 0;
+			border-radius: 999px;
+			font: inherit;
+		}
+
+		button {
+			cursor: pointer;
+			padding: 12px 18px;
+			color: #fff8ef;
+			background: linear-gradient(135deg, var(--brand-2), #b25119);
+			box-shadow: 0 10px 24px rgba(196, 107, 45, 0.24);
+			transition: transform 160ms ease, box-shadow 160ms ease;
+		}
+
+		button:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 14px 28px rgba(196, 107, 45, 0.28);
+		}
+
+		.chip {
+			display: inline-flex;
+			align-items: center;
+			gap: 8px;
+			padding: 10px 14px;
+			color: var(--muted);
+			background: rgba(31, 106, 82, 0.08);
+			border: 1px solid rgba(31, 106, 82, 0.12);
+		}
+
+		.status {
+			margin-bottom: 16px;
+			padding: 14px 16px;
+			border-radius: var(--radius-lg);
+			font-size: 0.95rem;
+			color: var(--text);
+			background: rgba(240, 180, 77, 0.18);
+			border: 1px solid rgba(196, 107, 45, 0.18);
+		}
+
+		.status.error {
+			color: #7a260f;
+			background: rgba(203, 95, 57, 0.14);
+			border-color: rgba(203, 95, 57, 0.24);
+		}
+
+		.table-shell {
+			overflow: hidden;
+			border: 1px solid var(--line);
+			border-radius: 22px;
+			background: var(--panel-strong);
+		}
+
+		.table-scroll {
+			overflow: auto;
+			max-height: 68vh;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			min-width: 640px;
+		}
+
+		thead th {
+			position: sticky;
+			top: 0;
+			z-index: 1;
+			padding: 18px 16px;
+			text-align: left;
+			font-size: 0.82rem;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: var(--muted);
+			background: rgba(232, 214, 182, 0.92);
+			backdrop-filter: blur(10px);
+			border-bottom: 1px solid var(--line);
+			cursor: pointer;
+			user-select: none;
+		}
+
+		tbody td {
+			padding: 16px;
+			border-bottom: 1px solid var(--line);
+			font-size: 0.98rem;
+			vertical-align: top;
+		}
+
+		tbody tr {
+			transition: background-color 140ms ease, transform 140ms ease;
+		}
+
+		tbody tr:hover {
+			background: rgba(240, 180, 77, 0.11);
+		}
+
+		tbody tr:last-child td {
+			border-bottom: 0;
+		}
+
+		.empty {
+			padding: 42px 20px;
+			text-align: center;
+			color: var(--muted);
+		}
+
+		.footer-note {
+			margin-top: 14px;
+			color: var(--muted);
+			font-size: 0.9rem;
+		}
+
+		.sort-indicator {
+			margin-left: 8px;
+			font-size: 0.92em;
+			color: var(--brand);
+		}
+
+		@keyframes rise {
+			from {
+				opacity: 0;
+				transform: translateY(18px);
+			}
+
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		@media (max-width: 900px) {
+			.hero-grid {
+				grid-template-columns: 1fr;
+			}
+
+			.hero-stats {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+		}
+
+		@media (max-width: 640px) {
+			.shell {
+				width: min(100% - 20px, 1180px);
+				padding-top: 20px;
+			}
+
+			.hero,
+			.panel {
+				padding: 18px;
+			}
+
+			.hero-stats {
+				grid-template-columns: 1fr;
+			}
+
+			.search-wrap,
+			.button-row,
+			.controls {
+				width: 100%;
+			}
+
+			.button-row {
+				justify-content: space-between;
+			}
+
+			button,
+			.chip {
+				width: 100%;
+				justify-content: center;
+			}
+
+			table {
+				min-width: 520px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="shell">
+		<section class="hero">
+			<div class="hero-grid">
+				<div>
+					<span class="eyebrow">Live Sheet Viewer</span>
+					<h1>ROOC Auction Roulette</h1>
+					<p>
+						A polished live table fed directly from Google Sheets. Search fast, sort any column,
+						and refresh on demand without touching the source sheet.
+					</p>
+				</div>
+				<div class="hero-stats">
+					<article class="stat">
+						<span class="stat-label">Visible Rows</span>
+						<strong class="stat-value" id="visibleRows">0</strong>
+					</article>
+					<article class="stat">
+						<span class="stat-label">Columns</span>
+						<strong class="stat-value" id="columnCount">0</strong>
+					</article>
+				</div>
+			</div>
+		</section>
+
+		<section class="panel">
+			<div class="controls">
+				<label class="search-wrap" for="searchInput">
+					<span>Search</span>
+					<input id="searchInput" type="search" placeholder="Filter any value in the table">
+				</label>
+				<div class="button-row">
+					<button id="refreshButton" type="button">Refresh Sheet</button>
+					<span class="chip" id="lastUpdated">Waiting for first load</span>
+				</div>
+			</div>
+
+			<div class="status" id="statusBanner">Loading the sheet…</div>
+
+			<div class="table-shell">
+				<div class="table-scroll">
+					<table>
+						<thead id="tableHead"></thead>
+						<tbody id="tableBody"></tbody>
+					</table>
+				</div>
+			</div>
+
+			<p class="footer-note">
+				Source: Google Sheets tab “ROOC Auction Roulette” via the public Visualization feed.
+			</p>
+		</section>
+	</main>
+
+	<script>
+		const SHEET_ID = "1DoJ54mgWmiTkHpTDB1y-nKP-FEJ0czyA";
+		const SHEET_NAME = "ROOC Auction Roulette";
+		const AUTO_REFRESH_MS = 30000;
+
+		const state = {
+			columns: [],
+			rows: [],
+			filteredRows: [],
+			sortIndex: -1,
+			sortDirection: "asc",
+			lastSignature: "",
+			isFirstLoad: true,
+			requestReason: "initial"
+		};
+
+		const statusBanner = document.getElementById("statusBanner");
+		const tableHead = document.getElementById("tableHead");
+		const tableBody = document.getElementById("tableBody");
+		const searchInput = document.getElementById("searchInput");
+		const refreshButton = document.getElementById("refreshButton");
+		const visibleRows = document.getElementById("visibleRows");
+		const columnCount = document.getElementById("columnCount");
+		const lastUpdated = document.getElementById("lastUpdated");
+
+		function setStatus(message, isError = false) {
+			statusBanner.textContent = message;
+			statusBanner.classList.toggle("error", isError);
+		}
+
+		function normalizeValue(cell) {
+			if (!cell) {
+				return "";
+			}
+
+			if (typeof cell.f === "string" && cell.f.trim()) {
+				return cell.f;
+			}
+
+			if (cell.v === null || cell.v === undefined) {
+				return "";
+			}
+
+			return String(cell.v);
+		}
+
+		function extractTableData(table) {
+			const rawColumns = (table.cols || []).map((col, index) => col.label?.trim() || `Column ${index + 1}`);
+			const rawRows = (table.rows || []).map((row) => (row.c || []).map(normalizeValue));
+			if (rawRows.length > 0) {
+				return {
+					columns: rawRows[0].map((value, index) => value || `Column ${index + 1}`),
+					rows: rawRows.slice(1)
+				};
+			}
+
+			return {
+				columns: rawColumns,
+				rows: rawRows
+			};
+		}
+
+		function compareValues(left, right) {
+			return left.localeCompare(right, undefined, { numeric: true, sensitivity: "base" });
+		}
+
+		function applyFilters() {
+			const query = searchInput.value.trim().toLowerCase();
+			let nextRows = [...state.rows];
+
+			if (query) {
+				nextRows = nextRows.filter((row) => row.some((value) => value.toLowerCase().includes(query)));
+			}
+
+			if (state.sortIndex >= 0) {
+				const modifier = state.sortDirection === "asc" ? 1 : -1;
+				nextRows.sort((left, right) => modifier * compareValues(left[state.sortIndex] || "", right[state.sortIndex] || ""));
+			}
+
+			state.filteredRows = nextRows;
+			renderTable();
+			updateStats();
+		}
+
+		function updateStats() {
+			visibleRows.textContent = String(state.filteredRows.length);
+			columnCount.textContent = String(state.columns.length);
+		}
+
+		function renderTable() {
+			tableHead.innerHTML = "";
+			tableBody.innerHTML = "";
+
+			const headRow = document.createElement("tr");
+
+			state.columns.forEach((column, index) => {
+				const th = document.createElement("th");
+				const isSorted = state.sortIndex === index;
+				th.innerHTML = `${column}<span class="sort-indicator">${isSorted ? (state.sortDirection === "asc" ? "↑" : "↓") : ""}</span>`;
+				th.addEventListener("click", () => {
+					if (state.sortIndex === index) {
+						state.sortDirection = state.sortDirection === "asc" ? "desc" : "asc";
+					} else {
+						state.sortIndex = index;
+						state.sortDirection = "asc";
+					}
+
+					applyFilters();
+				});
+				headRow.appendChild(th);
+			});
+
+			tableHead.appendChild(headRow);
+
+			if (state.filteredRows.length === 0) {
+				const row = document.createElement("tr");
+				const cell = document.createElement("td");
+				cell.className = "empty";
+				cell.colSpan = Math.max(state.columns.length, 1);
+				cell.textContent = state.rows.length === 0 ? "No rows found in this sheet." : "No rows match the current filter.";
+				row.appendChild(cell);
+				tableBody.appendChild(row);
+				return;
+			}
+
+			state.filteredRows.forEach((rowData) => {
+				const row = document.createElement("tr");
+				state.columns.forEach((_, index) => {
+					const td = document.createElement("td");
+					td.textContent = rowData[index] || "";
+					row.appendChild(td);
+				});
+				tableBody.appendChild(row);
+			});
+		}
+
+		function buildSignature(data) {
+			return JSON.stringify(data);
+		}
+
+		function loadSheet(reason = "manual") {
+			state.requestReason = reason;
+
+			if (state.isFirstLoad) {
+				setStatus("Loading the sheet…");
+			} else if (reason === "auto") {
+				setStatus(`Checking Google Sheets for updates every ${AUTO_REFRESH_MS / 1000} seconds…`);
+			} else {
+				setStatus("Refreshing the sheet…");
+			}
+
+			refreshButton.disabled = true;
+
+			const script = document.createElement("script");
+			const existing = document.getElementById("sheetLoader");
+			const cacheBuster = Date.now();
+
+			if (existing) {
+				existing.remove();
+			}
+
+			script.id = "sheetLoader";
+			script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&cacheBust=${cacheBuster}`;
+			script.onerror = () => {
+				setStatus("The Google Sheets feed could not be loaded. Check that the sheet remains publicly accessible.", true);
+				refreshButton.disabled = false;
+			};
+
+			document.body.appendChild(script);
+		}
+
+		function handleSheetResponse(response) {
+			const table = response?.table;
+
+			if (!table) {
+				setStatus("The sheet returned an unexpected response.", true);
+				refreshButton.disabled = false;
+				return;
+			}
+
+			const nextData = extractTableData(table);
+			const nextSignature = buildSignature(nextData);
+			const hasChanged = nextSignature !== state.lastSignature;
+			state.columns = nextData.columns;
+			state.rows = nextData.rows;
+			state.lastSignature = nextSignature;
+
+			applyFilters();
+
+			if (state.isFirstLoad) {
+				setStatus(`Loaded ${state.rows.length} rows from ${SHEET_NAME}. This page checks for updates automatically every ${AUTO_REFRESH_MS / 1000} seconds.`);
+				lastUpdated.textContent = `Loaded ${new Date().toLocaleString()}`;
+			} else if (hasChanged) {
+				setStatus(`Google Sheets changed. Showing the latest ${state.rows.length} rows from ${SHEET_NAME}.`);
+				lastUpdated.textContent = `Updated ${new Date().toLocaleString()}`;
+			} else {
+				setStatus(`No changes found. Still showing ${state.rows.length} rows from ${SHEET_NAME}.`);
+			}
+
+			state.isFirstLoad = false;
+			refreshButton.disabled = false;
+		}
+
+		window.google = window.google || {};
+		window.google.visualization = window.google.visualization || {};
+		window.google.visualization.Query = window.google.visualization.Query || {};
+		window.google.visualization.Query.setResponse = handleSheetResponse;
+
+		searchInput.addEventListener("input", applyFilters);
+		refreshButton.addEventListener("click", () => loadSheet("manual"));
+
+		window.setInterval(() => loadSheet("auto"), AUTO_REFRESH_MS);
+
+		loadSheet("initial");
+	</script>
+</body>
+</html>
