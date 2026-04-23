@@ -193,6 +193,7 @@ export default function HomePage() {
   const [selectedIGN, setSelectedIGN] = useState("");
   const [selectedReward, setSelectedReward] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEntryLocked, setIsEntryLocked] = useState(false);
   const [submitResult, setSubmitResult] = useState(null);
 
   const isFirstLoadRef = useRef(true);
@@ -362,16 +363,18 @@ export default function HomePage() {
     setShowInsertModal(true);
     setSelectedIGN("");
     setSelectedReward("");
+    setIsEntryLocked(false);
     setSubmitResult(null);
     fetchMembers();
   }, [fetchMembers]);
 
   const handleCloseInsert = useCallback(() => {
+    setIsEntryLocked(false);
     setShowInsertModal(false);
   }, []);
 
   const handleSubmitIGN = useCallback(() => {
-    if (!selectedIGN || !selectedReward) return;
+    if (!selectedIGN || !selectedReward || isEntryLocked) return;
 
     if (!APPS_SCRIPT_URL) {
       setSubmitResult({ type: "error", message: "APPS_SCRIPT_URL is not set in page.js. Deploy the Apps Script and paste the URL." });
@@ -379,6 +382,7 @@ export default function HomePage() {
     }
 
     setIsSubmitting(true);
+    setIsEntryLocked(true);
     setSubmitResult(null);
 
     const url = `${APPS_SCRIPT_URL}?ign=${encodeURIComponent(selectedIGN)}&reward=${encodeURIComponent(selectedReward)}`;
@@ -393,18 +397,21 @@ export default function HomePage() {
         if (data.success) {
           setSubmitResult({ type: "success", message: `${selectedIGN} added successfully!` });
           setTimeout(() => {
+            setIsEntryLocked(false);
             setShowInsertModal(false);
             loadSheet("manual");
           }, 1800);
         } else {
+          setIsEntryLocked(false);
           setSubmitResult({ type: "error", message: data.error || "An error occurred while inserting." });
         }
       })
       .catch((err) => {
         setIsSubmitting(false);
+        setIsEntryLocked(false);
         setSubmitResult({ type: "error", message: `Request failed: ${err.message}. Make sure the Apps Script is deployed as "Anyone" and the URL is correct.` });
       });
-  }, [selectedIGN, selectedReward, loadSheet]);
+  }, [isEntryLocked, selectedIGN, selectedReward, loadSheet]);
 
   useEffect(() => {
     loadSheet("initial");
@@ -425,11 +432,11 @@ export default function HomePage() {
   return (
     <main className="shell">
       {showInsertModal && (
-        <div className="modal-overlay" onClick={handleCloseInsert}>
+        <div className="modal-overlay" onClick={isEntryLocked ? undefined : handleCloseInsert}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2 className="modal-title">Insert IGN</h2>
-              <button type="button" className="modal-close" onClick={handleCloseInsert} aria-label="Close">✕</button>
+              <button type="button" className="modal-close" onClick={handleCloseInsert} aria-label="Close" disabled={isEntryLocked}>✕</button>
             </div>
             <div className="modal-body">
               <div className="modal-field">
@@ -451,13 +458,13 @@ export default function HomePage() {
               )}
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn-cancel" onClick={handleCloseInsert} disabled={isSubmitting}>
+              <button type="button" className="btn-cancel" onClick={handleCloseInsert} disabled={isSubmitting || isEntryLocked}>
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSubmitIGN}
-                disabled={!selectedIGN || !selectedReward || isSubmitting}
+                disabled={!selectedIGN || !selectedReward || isSubmitting || isEntryLocked}
               >
                 {isSubmitting ? "Submitting…" : "Submit"}
               </button>
