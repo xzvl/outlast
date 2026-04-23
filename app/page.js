@@ -572,7 +572,7 @@ export default function HomePage() {
         </div>
 
         <p className="footer-note">
-          Source: Google Sheets tab "ROOC Auction Roulette" via the public Visualization feed.
+          Developed by: <a href="https://www.facebook.com/xzviel" target="_blank" rel="noopener noreferrer">xzvl</a>.
         </p>
       </section>
     </main>
