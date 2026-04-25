@@ -320,6 +320,21 @@ tbody td {
   display: inline;
 }
 
+.row-number {
+  color: #888;
+  font-size: 0.85em;
+  text-align: center;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.col-item-number {
+  color: #888;
+  font-size: 0.85em;
+  margin-right: 2px;
+  user-select: none;
+}
+
 .completed-reward-indicator {
   display: inline-flex;
   width: 18px;

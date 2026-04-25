@@ -249,8 +249,7 @@ export default function HomePage() {
   const [status, setStatus] = useState("Loading the sheet...");
   const [isError, setIsError] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortIndex, setSortIndex] = useState(-1);
-  const [sortDirection, setSortDirection] = useState("asc");
+
   const [lastUpdated, setLastUpdated] = useState("Waiting for first load");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [completedIgnSet, setCompletedIgnSet] = useState(new Set());
@@ -289,13 +288,10 @@ export default function HomePage() {
       nextRows = nextRows.filter((row) => row.some((value) => value.toLowerCase().includes(query)));
     }
 
-    if (sortIndex >= 0) {
-      const modifier = sortDirection === "asc" ? 1 : -1;
-      nextRows.sort((left, right) => modifier * compareValues(left[sortIndex] || "", right[sortIndex] || ""));
-    }
+
 
     return nextRows;
-  }, [rows, searchQuery, sortDirection, sortIndex]);
+  }, [rows, searchQuery]);
 
   const fetchMembersData = useCallback(() => {
     setIsFetchingMembers(true);
@@ -867,27 +863,9 @@ Guild members can submit their IGN for specific auction rewards, and the system 
             <table>
               <thead>
                 <tr>
-                  {columns.map((column, index) => {
-                    const isSorted = sortIndex === index;
-                    const indicator = isSorted ? (sortDirection === "asc" ? "↑" : "↓") : "";
-
-                    return (
-                      <th
-                        key={`${column}-${index}`}
-                        onClick={() => {
-                          if (sortIndex === index) {
-                            setSortDirection((value) => (value === "asc" ? "desc" : "asc"));
-                          } else {
-                            setSortIndex(index);
-                            setSortDirection("asc");
-                          }
-                        }}
-                      >
-                        {column}
-                        <span className="sort-indicator">{indicator}</span>
-                      </th>
-                    );
-                  })}
+                  {columns.map((column, index) => (
+                    <th key={`${column}-${index}`}>{column}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -900,12 +878,16 @@ Guild members can submit their IGN for specific auction rewards, and the system 
                 ) : (
                   filteredRows.map((rowData, rowIndex) => (
                     <tr key={`row-${rowIndex}`}>
-                      {columns.map((_, columnIndex) => {
+                      {columns.map((col, columnIndex) => {
                         const cellValue = rowData[columnIndex] || "";
                         const isCompletedIgn = completedIgnSet.has(String(cellValue).trim().toLowerCase());
+                        const isNumberedCol = /lnd|tns|card/i.test(col);
 
                         return (
                           <td key={`cell-${rowIndex}-${columnIndex}`}>
+                            {isNumberedCol && cellValue !== "" && (
+                              <span className="col-item-number">{rowIndex + 1}. </span>
+                            )}
                             <span className="table-cell-value">{cellValue}</span>
                             {isCompletedIgn && (
                               <span
