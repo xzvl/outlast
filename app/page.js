@@ -7,6 +7,7 @@ import logoImage from "./assets/logo.png";
 const SHEET_ID = "1Uyho2Vk0j45oAPiYu0GLCMHn7be3E7h92-bREAS443s";
 const SHEET_NAME = "ROOC Auction Roulette";
 const MAIN_SHEET_GID = "946119161";
+const COMPLETED_SHEET_GID = "19082640";
 const MEMBERS_SHEET_NAME = "ROOC Members Data";
 const MEMBERS_DATA_GID = "114714217";
 const AUTO_REFRESH_MS = 30000;
@@ -252,6 +253,7 @@ export default function HomePage() {
   const [sortDirection, setSortDirection] = useState("asc");
   const [lastUpdated, setLastUpdated] = useState("Waiting for first load");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [completedIgnSet, setCompletedIgnSet] = useState(new Set());
 
   const [showInsertModal, setShowInsertModal] = useState(false);
   const [memberOptions, setMemberOptions] = useState([]);
@@ -275,6 +277,7 @@ export default function HomePage() {
   const isFirstLoadRef = useRef(true);
   const lastSignatureRef = useRef("");
   const mainSheetLoaderRef = useRef(createJsonpLoader());
+  const completedSheetLoaderRef = useRef(createJsonpLoader());
   const membersLoaderRef = useRef(createJsonpLoader());
   const auctionNamesLoaderRef = useRef(createJsonpLoader());
 
@@ -431,6 +434,34 @@ export default function HomePage() {
     isFirstLoadRef.current = false;
   }, []);
 
+  const loadCompletedIgns = useCallback(() => {
+    completedSheetLoaderRef.current({
+      gid: COMPLETED_SHEET_GID,
+      callbackName: "__completedSheetResponse",
+      onResponse: (response) => {
+        const table = response?.table;
+        const rawRows = extractRows(table);
+        const ignIndex = 0;
+
+        const hasHeader =
+          rawRows.length > 0 &&
+          String(rawRows[0][ignIndex] || "").trim().toLowerCase() === "ign";
+
+        const dataRows = hasHeader ? rawRows.slice(1) : rawRows;
+        const nextSet = new Set(
+          dataRows
+            .map((row) => String(row[ignIndex] || "").trim().toLowerCase())
+            .filter(Boolean)
+        );
+
+        setCompletedIgnSet(nextSet);
+      },
+      onError: () => {
+        setCompletedIgnSet(new Set());
+      },
+    });
+  }, []);
+
   const loadSheet = useCallback((reason = "manual") => {
     if (isFirstLoadRef.current) {
       setStatus("Loading the sheet...");
@@ -453,7 +484,9 @@ export default function HomePage() {
         setIsRefreshing(false);
       },
     });
-  }, [handleMainSheetResponse]);
+
+    loadCompletedIgns();
+  }, [handleMainSheetResponse, loadCompletedIgns]);
 
   const handleOpenInsert = useCallback(() => {
     setShowInsertModal(true);
@@ -867,9 +900,27 @@ Guild members can submit their IGN for specific auction rewards, and the system 
                 ) : (
                   filteredRows.map((rowData, rowIndex) => (
                     <tr key={`row-${rowIndex}`}>
-                      {columns.map((_, columnIndex) => (
-                        <td key={`cell-${rowIndex}-${columnIndex}`}>{rowData[columnIndex] || ""}</td>
-                      ))}
+                      {columns.map((_, columnIndex) => {
+                        const cellValue = rowData[columnIndex] || "";
+                        const isCompletedIgn = completedIgnSet.has(String(cellValue).trim().toLowerCase());
+
+                        return (
+                          <td key={`cell-${rowIndex}-${columnIndex}`}>
+                            <span className="table-cell-value">{cellValue}</span>
+                            {isCompletedIgn && (
+                              <span
+                                className="completed-reward-indicator"
+                                title="IGN found in ROOC Auction Completed"
+                                aria-label="Completed reward"
+                              >
+                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                  <path d="M8 3h8v2h3a1 1 0 0 1 1 1v2a5 5 0 0 1-4 4.9A5 5 0 0 1 13 15v2h3v2H8v-2h3v-2a5 5 0 0 1-3-2.1A5 5 0 0 1 4 8V6a1 1 0 0 1 1-1h3V3zm-2 4v1a3 3 0 0 0 2 2.82V7H6zm10 0v3.82A3 3 0 0 0 18 8V7h-2z" />
+                                </svg>
+                              </span>
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
                   ))
                 )}
