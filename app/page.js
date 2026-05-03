@@ -12,7 +12,7 @@ const MEMBERS_SHEET_NAME = "ROOC Members Data";
 const MEMBERS_DATA_GID = "114714217";
 const TRIGGER_SHEET_GID = "1887602829";
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzajz1eAmPus_0k0Zoj7g0InEnrPaa8VdEnIO_3FD4VB3SPZ7tYNpqxlxOpJgsQ3u3naA/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_RDz69e20usRPaJw8lz4bdbVjZiAYhNHE26_Wjiqm9G00aq-EeUq3Ru9OuxIe3vncNA/exec";
 
 const REWARD_OPTIONS = [
   { label: "Light and Dark", value: "LND" },
