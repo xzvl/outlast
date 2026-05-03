@@ -232,6 +232,7 @@ function handleClearAuctionData(params) {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var membersSheet = ss.getSheetByName(MEMBERS_SHEET_NAME);
   var dataSheet = ss.getSheetByName(AUCTION_DATA_SHEET_NAME);
+  var auctionSheet = ss.getSheetByName(AUCTION_SHEET_NAME);
 
   if (!membersSheet) {
     return { error: "Sheet \"" + MEMBERS_SHEET_NAME + "\" not found." };
@@ -241,17 +242,22 @@ function handleClearAuctionData(params) {
     return { error: "Sheet \"" + AUCTION_DATA_SHEET_NAME + "\" not found." };
   }
 
+  if (!auctionSheet) {
+    return { error: "Sheet \"" + AUCTION_SHEET_NAME + "\" not found." };
+  }
+
   var randomizerAuth = validateRandomizerAuth(membersSheet, triggerIgn, gameId);
   if (!randomizerAuth.success) {
     return { error: randomizerAuth.error };
   }
 
   clearSheetDataFromRow(dataSheet, 2);
+  clearSheetDataFromRow(auctionSheet, 2);
   SpreadsheetApp.flush();
 
   return {
     success: true,
-    message: "ROOC Auction Data cleared successfully.",
+    message: "ROOC Auction Data and ROOC Auction Roulette cleared successfully.",
   };
 }
 

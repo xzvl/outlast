@@ -345,6 +345,7 @@ export default function HomePage() {
   const [isClearing, setIsClearing] = useState(false);
   const [clearResult, setClearResult] = useState(null);
   const [claimingDate, setClaimingDate] = useState("");
+  const [isCopyToastVisible, setIsCopyToastVisible] = useState(false);
 
   const isFirstLoadRef = useRef(true);
   const lastSignatureRef = useRef("");
@@ -355,6 +356,7 @@ export default function HomePage() {
   const auctionNamesLoaderRef = useRef(createJsonpLoader());
   const shuffleIntervalRef = useRef(null);
   const shuffleTimeoutRef = useRef(null);
+  const copyToastTimeoutRef = useRef(null);
 
   const filteredRows = useMemo(() => rows, [rows]);
 
@@ -917,7 +919,7 @@ export default function HomePage() {
           return;
         }
 
-        setClearResult({ type: "success", message: "ROOC Auction Data cleared." });
+        setClearResult({ type: "success", message: "ROOC Auction Data and ROOC Auction Roulette cleared." });
         loadSheet();
         window.setTimeout(() => {
           setShowClearModal(false);
@@ -963,26 +965,61 @@ export default function HomePage() {
       });
   }, [claimingDate, loadSheet]);
 
-  const handleCopyLndData = useCallback(async (dayData) => {
-    const entries = (dayData?.LND || []);
-    const lines = ["FOR LND", ...entries.map((entry) => `@${entry.ign} = ${entry.pages || "-"}`)];
-    const text = lines.join("\n");
+  const triggerCopyToast = useCallback(() => {
+    if (copyToastTimeoutRef.current) {
+      window.clearTimeout(copyToastTimeoutRef.current);
+    }
+    setIsCopyToastVisible(true);
+    copyToastTimeoutRef.current = window.setTimeout(() => {
+      setIsCopyToastVisible(false);
+      copyToastTimeoutRef.current = null;
+    }, 1300);
+  }, []);
+
+  const handleCopyRewardData = useCallback(async (dayData) => {
+    const buildLines = (title, entries) => {
+      const output = [title];
+      for (let i = 0; i < entries.length; i += 1) {
+        const entry = entries[i] || {};
+        output.push(`@${entry.ign || "-"} = ${entry.pages || "-"}`);
+      }
+      return output;
+    };
+
+    const lndEntries = dayData?.LND || [];
+    const tnsEntries = dayData?.TNS || [];
+    const cardEntries = dayData?.["Card Frag(Prio from Elite)"] || [];
+
+    const sections = [
+      ...buildLines("FOR LND", lndEntries),
+      "",
+      ...buildLines("FOR TNS", tnsEntries),
+      "",
+      ...buildLines("FOR CARDS", cardEntries),
+    ];
+    const text = sections.join("\n");
 
     try {
       await navigator.clipboard.writeText(text);
+      triggerCopyToast();
     } catch {
       // Fallback for browsers where async clipboard is unavailable.
-      const textarea = document.createElement("textarea");
-      textarea.value = text;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "absolute";
-      textarea.style.left = "-9999px";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
+      try {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "absolute";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        triggerCopyToast();
+      } catch {
+        // Ignore clipboard failures silently.
+      }
     }
-  }, []);
+  }, [triggerCopyToast]);
 
   const auctionRowsByDate = useMemo(() => {
     const byDate = new Map();
@@ -1016,6 +1053,9 @@ export default function HomePage() {
   useEffect(() => {
     return () => {
       stopShuffleAnimation();
+      if (copyToastTimeoutRef.current) {
+        window.clearTimeout(copyToastTimeoutRef.current);
+      }
     };
   }, [stopShuffleAnimation]);
 
@@ -1025,6 +1065,11 @@ export default function HomePage() {
 
   return (
     <main className="shell">
+      {isCopyToastVisible && (
+        <div className="copy-toast" role="status" aria-live="polite">
+          Copy Records.
+        </div>
+      )}
       {showInsertModal && (
         <div className="modal-overlay" onClick={handleCloseInsert}>
           <div className="modal-card" onClick={(event) => event.stopPropagation()}>
@@ -1457,7 +1502,7 @@ Guild members can submit their IGN for specific auction rewards, and the system 
                       <button
                         type="button"
                         className="table-title-btn table-title-btn--copy"
-                        onClick={() => handleCopyLndData(dayData)}
+                        onClick={() => handleCopyRewardData(dayData)}
                       >
                         Copy
                       </button>
