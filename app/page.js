@@ -1471,6 +1471,11 @@ Guild members can submit their IGN for specific auction rewards, and the system 
                 Insert IGN
               </button>
             )}
+            {!hasAuctionDataRecords && (
+              <button type="button" className="btn-randomize" onClick={handleOpenRandomizer}>
+                Randomizer
+              </button>
+            )}
             <button type="button" className="btn-overrun" onClick={handleOpenOverrunModal}>
               Generate Overrun Rewards
             </button>
