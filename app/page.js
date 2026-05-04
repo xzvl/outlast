@@ -1048,6 +1048,7 @@ export default function HomePage() {
     dates.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
     return dates;
   }, [auctionRowsByDate]);
+  const hasAuctionDataRecords = auctionDataRows.length > 0;
   const hasAuctionData = orderedAuctionDates.length > 0;
 
   useEffect(() => {
@@ -1465,12 +1466,11 @@ Guild members can submit their IGN for specific auction rewards, and the system 
         <div className="controls">
           <div className="roc-title">Ragnarok Origin Classic</div>
           <div className="button-row">
-            <button type="button" className="btn-insert" onClick={handleOpenInsert}>
-              Insert IGN
-            </button>
-            <button type="button" className="btn-randomize" onClick={handleOpenRandomizer}>
-              Randomizer
-            </button>
+            {!hasAuctionDataRecords && (
+              <button type="button" className="btn-insert" onClick={handleOpenInsert}>
+                Insert IGN
+              </button>
+            )}
             <button type="button" className="btn-overrun" onClick={handleOpenOverrunModal}>
               Generate Overrun Rewards
             </button>
