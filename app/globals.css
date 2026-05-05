@@ -299,6 +299,52 @@ button:disabled {
   gap: 14px;
 }
 
+.pending-reward-shell {
+  margin-top: 14px;
+  margin-bottom: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.pending-reward-title {
+  margin: 0 0 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.pending-reward-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pending-reward-card {
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  background: rgba(255, 251, 244, 0.75);
+}
+
+.pending-reward-card h3 {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+}
+
+.pending-reward-card ol {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.pending-reward-empty {
+  margin: 0;
+  color: var(--muted);
+}
+
 .table-title {
   display: flex;
   align-items: center;
@@ -550,6 +596,10 @@ tbody tr:last-child td {
 
   table {
     min-width: 520px;
+  }
+
+  .pending-reward-grid {
+    grid-template-columns: 1fr;
   }
 }
 

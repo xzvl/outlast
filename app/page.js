@@ -128,6 +128,28 @@ function findColumnIndexByNames(columns, candidateNames) {
   });
 }
 
+function normalizeRewardKey(value) {
+  const normalized = String(value || "").toLowerCase().replace(/\s+/g, "");
+
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized === "lnd" || normalized.includes("lightanddark")) {
+    return "LND";
+  }
+
+  if (normalized === "tns" || normalized.includes("timeandspace")) {
+    return "TNS";
+  }
+
+  if (normalized.includes("cardfrag") || normalized.includes("cardfragment")) {
+    return "Card Frag(Prio from Elite)";
+  }
+
+  return "";
+}
+
 function compareValues(left, right) {
   return left.localeCompare(right, undefined, { numeric: true, sensitivity: "base" });
 }
@@ -1051,6 +1073,65 @@ export default function HomePage() {
   const hasAuctionDataRecords = auctionDataRows.length > 0;
   const hasAuctionData = orderedAuctionDates.length > 0;
 
+  const pendingRouletteByReward = useMemo(() => {
+    const rewardColumnIndexes = {
+      LND: findColumnIndexByNames(columns, ["LND", "Light and Dark"]),
+      TNS: findColumnIndexByNames(columns, ["TNS", "Time and Space"]),
+      "Card Frag(Prio from Elite)": findColumnIndexByNames(columns, ["Card Frag(Prio from Elite)", "Card Fragment", "Card Frag"]),
+    };
+
+    const rouletteByReward = createEmptyRewardColumns();
+    const seenRouletteNames = {
+      LND: new Set(),
+      TNS: new Set(),
+      "Card Frag(Prio from Elite)": new Set(),
+    };
+
+    for (let i = 0; i < rows.length; i += 1) {
+      const row = rows[i] || [];
+      for (const rewardKey of ["LND", "TNS", "Card Frag(Prio from Elite)"]) {
+        const columnIndex = rewardColumnIndexes[rewardKey];
+        if (columnIndex < 0) {
+          continue;
+        }
+
+        const ign = String(row[columnIndex] || "").trim();
+        const ignKey = ign.toLowerCase();
+        if (!ign || seenRouletteNames[rewardKey].has(ignKey)) {
+          continue;
+        }
+
+        seenRouletteNames[rewardKey].add(ignKey);
+        rouletteByReward[rewardKey].push(ign);
+      }
+    }
+
+    const existingAuctionEntries = new Set();
+    for (let i = 0; i < auctionDataRows.length; i += 1) {
+      const row = auctionDataRows[i] || [];
+      const ign = String(row[0] || "").trim();
+      const rewardKey = normalizeRewardKey(row[1]);
+      if (!ign || !rewardKey) {
+        continue;
+      }
+      existingAuctionEntries.add(`${rewardKey}::${ign.toLowerCase()}`);
+    }
+
+    const pending = createEmptyRewardColumns();
+    for (const rewardKey of ["LND", "TNS", "Card Frag(Prio from Elite)"]) {
+      pending[rewardKey] = rouletteByReward[rewardKey].filter(
+        (ign) => !existingAuctionEntries.has(`${rewardKey}::${ign.toLowerCase()}`)
+      );
+    }
+
+    return pending;
+  }, [auctionDataRows, columns, rows]);
+
+  const pendingRouletteTotal = useMemo(
+    () => pendingRouletteByReward.LND.length + pendingRouletteByReward.TNS.length + pendingRouletteByReward["Card Frag(Prio from Elite)"].length,
+    [pendingRouletteByReward]
+  );
+
   useEffect(() => {
     return () => {
       stopShuffleAnimation();
@@ -1487,77 +1568,101 @@ Guild members can submit their IGN for specific auction rewards, and the system 
         </div>
 
         {hasAuctionData ? (
-          <div className="weekly-tables">
-            {orderedAuctionDates.map((date) => {
-              const dayLabel = getDayLabelFromDateString(date);
-              const dayData = auctionRowsByDate.get(date) || createEmptyRewardColumns();
-              return (
-                <div className="table-shell" key={`weekly-${date}-${dayLabel}`}>
-                  <div className="table-title">
-                    <span>{dayLabel} - {date}</span>
-                    <div className="table-title-actions">
-                      <button
-                        type="button"
-                        className="table-title-btn table-title-btn--claim"
-                        onClick={() => handleClaimDate(date)}
-                        disabled={claimingDate === date}
-                      >
-                        {claimingDate === date ? "Claiming..." : "Claimed"}
-                      </button>
-                      <button
-                        type="button"
-                        className="table-title-btn table-title-btn--copy"
-                        onClick={() => handleCopyRewardData(dayData)}
-                      >
-                        Copy
-                      </button>
+          <>
+            <div className="weekly-tables">
+              {orderedAuctionDates.map((date) => {
+                const dayLabel = getDayLabelFromDateString(date);
+                const dayData = auctionRowsByDate.get(date) || createEmptyRewardColumns();
+                return (
+                  <div className="table-shell" key={`weekly-${date}-${dayLabel}`}>
+                    <div className="table-title">
+                      <span>{dayLabel} - {date}</span>
+                      <div className="table-title-actions">
+                        <button
+                          type="button"
+                          className="table-title-btn table-title-btn--claim"
+                          onClick={() => handleClaimDate(date)}
+                          disabled={claimingDate === date}
+                        >
+                          {claimingDate === date ? "Claiming..." : "Claimed"}
+                        </button>
+                        <button
+                          type="button"
+                          className="table-title-btn table-title-btn--copy"
+                          onClick={() => handleCopyRewardData(dayData)}
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                    <div className="table-scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Light and Dark</th>
+                            <th>Time and Space</th>
+                            <th>Card Fragment</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            {["LND", "TNS", "Card Frag(Prio from Elite)"].map((rewardKey) => {
+                              const entries = dayData[rewardKey] || [];
+                              return (
+                                <td key={`${dayLabel}-${rewardKey}`}>
+                                  {entries.length === 0 ? (
+                                    <span className="table-cell-value">-</span>
+                                  ) : (
+                                    <ol className="reward-list">
+                                      {entries.map((entry, itemIndex) => {
+                                        const isUnclaimed = String(entry.status || "").toLowerCase() === "unclaimed";
+                                        return (
+                                          <li key={`${rewardKey}-${entry.ign}-${itemIndex}`}>
+                                            <span className="table-cell-value">{itemIndex + 1}. {entry.ign} {!isUnclaimed && (
+                                              <span className="reward-claimed" title="Claimed" aria-label="Claimed">🏆</span>
+                                            )}</span>
+
+                                            <span className="reward-pages" style={isUnclaimed ? undefined : { textDecoration: "line-through" }}>{entry.pages}</span>
+                                          </li>
+                                        );
+                                      })}
+                                    </ol>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                  <div className="table-scroll">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Light and Dark</th>
-                          <th>Time and Space</th>
-                          <th>Card Fragment</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          {["LND", "TNS", "Card Frag(Prio from Elite)"].map((rewardKey) => {
-                            const entries = dayData[rewardKey] || [];
-                            return (
-                              <td key={`${dayLabel}-${rewardKey}`}>
-                                {entries.length === 0 ? (
-                                  <span className="table-cell-value">-</span>
-                                ) : (
-                                  <ol className="reward-list">
-                                    {entries.map((entry, itemIndex) => {
-                                      const isUnclaimed = String(entry.status || "").toLowerCase() === "unclaimed";
-                                      return (
-                                        <li key={`${rewardKey}-${entry.ign}-${itemIndex}`}>
-                                          <span className="table-cell-value">{itemIndex + 1}. {entry.ign}</span>
-                                          {isUnclaimed ? (
-                                            <span className="reward-pages">{entry.pages}</span>
-                                          ) : (
-                                            <span className="reward-claimed" title="Claimed" aria-label="Claimed">🏆</span>
-                                          )}
-                                        </li>
-                                      );
-                                    })}
-                                  </ol>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
+            <div className="pending-reward-shell">
+              <div className="pending-reward-title">Players Not Yet in Auction Data [{pendingRouletteTotal}]</div>
+              <div className="pending-reward-grid">
+                {REWARD_OPTIONS.map((reward) => {
+                  const entries = pendingRouletteByReward[reward.value] || [];
+                  return (
+                    <div className="pending-reward-card" key={`pending-${reward.value}`}>
+                      <h3>{reward.label}</h3>
+                      {entries.length === 0 ? (
+                        <p className="pending-reward-empty">-</p>
+                      ) : (
+                        <ol>
+                          {entries.map((ign, index) => (
+                            <li key={`${reward.value}-${ign}-${index}`}>{ign}</li>
+                          ))}
+                        </ol>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>
         ) : (
           <div className="table-shell">
             <div className="table-scroll">
