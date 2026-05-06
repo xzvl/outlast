@@ -27,15 +27,27 @@ var REWARD_COLUMNS = [
   "Card Frag(Prio from Elite)",
 ];
 
-var OVERRUN_RANK_REWARDS = {
-  "1": { "Card Frag(Prio from Elite)": 15, "LND": 100, "TNS": 160 },
-  "2": { "Card Frag(Prio from Elite)": 15, "LND": 100, "TNS": 160 },
-  "3": { "Card Frag(Prio from Elite)": 15, "LND": 100, "TNS": 160 },
-  "4": { "Card Frag(Prio from Elite)": 12, "LND": 90,  "TNS": 150 },
-  "5": { "Card Frag(Prio from Elite)": 12, "LND": 90,  "TNS": 150 },
-  "6": { "Card Frag(Prio from Elite)": 12, "LND": 90,  "TNS": 150 },
-  "7": { "Card Frag(Prio from Elite)": 12, "LND": 90,  "TNS": 150 },
-  "8": { "Card Frag(Prio from Elite)": 12, "LND": 90,  "TNS": 150 },
+var OVERRUN_GROUP_RANK_REWARDS = {
+  "advanced": {
+    "1": { "LND": 150, "TNS": 170, "Card Frag(Prio from Elite)": 20 },
+    "2": { "LND": 140, "TNS": 160, "Card Frag(Prio from Elite)": 20 },
+    "3": { "LND": 140, "TNS": 160, "Card Frag(Prio from Elite)": 20 },
+    "4": { "LND": 120, "TNS": 150, "Card Frag(Prio from Elite)": 15 },
+    "5": { "LND": 120, "TNS": 150, "Card Frag(Prio from Elite)": 15 },
+    "6": { "LND": 120, "TNS": 150, "Card Frag(Prio from Elite)": 15 },
+    "7": { "LND": 100, "TNS": 150, "Card Frag(Prio from Elite)": 12 },
+    "8": { "LND": 100, "TNS": 150, "Card Frag(Prio from Elite)": 12 },
+  },
+  "beginner": {
+    "1": { "LND": 80, "TNS": 140, "Card Frag(Prio from Elite)": 10 },
+    "2": { "LND": 75, "TNS": 130, "Card Frag(Prio from Elite)": 9 },
+    "3": { "LND": 70, "TNS": 120, "Card Frag(Prio from Elite)": 8 },
+    "4": { "LND": 65, "TNS": 110, "Card Frag(Prio from Elite)": 5 },
+    "5": { "LND": 60, "TNS": 100, "Card Frag(Prio from Elite)": 5 },
+    "6": { "LND": 50, "TNS": 80, "Card Frag(Prio from Elite)": 5 },
+    "7": { "LND": 30, "TNS": 30, "Card Frag(Prio from Elite)": 2 },
+    "8+": { "LND": 20, "TNS": 20, "Card Frag(Prio from Elite)": 1 },
+  },
 };
 
 var OFFICER_ROLE_KEYWORDS = [
@@ -130,14 +142,19 @@ function handleClaimAuctionDate(params) {
 function handleGenerateOverrunRewards(params) {
   var triggerIgn = (params.triggerIgn || "").trim();
   var gameId = (params.gameId || "").trim();
+  var groupRanking = String(params.groupRanking || "").trim().toLowerCase();
   var guildRanking = String(params.guildRanking || "").trim();
+  var officerCardBenefit = String(params.officerCardBenefit || "").trim().toLowerCase() === "true";
+  var officerCardQuantityRequested = Math.max(0, Number(params.officerCardQuantity || 0));
+  var officerCardRecipients = parseOfficerCardRecipients(params.officerCardRecipients);
 
-  if (!triggerIgn || !gameId || !guildRanking) {
-    return { error: "Missing triggerIgn, gameId, or guildRanking parameter." };
+  if (!triggerIgn || !gameId || !groupRanking || !guildRanking) {
+    return { error: "Missing triggerIgn, gameId, groupRanking, or guildRanking parameter." };
   }
 
-  if (!OVERRUN_RANK_REWARDS[guildRanking]) {
-    return { error: "Invalid guild ranking. Use Rank 1 to Rank 8." };
+  var rankRewards = getOverrunRankRewards(groupRanking, guildRanking);
+  if (!rankRewards) {
+    return { error: "Invalid group or guild ranking." };
   }
 
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -162,12 +179,25 @@ function handleGenerateOverrunRewards(params) {
     return { error: randomizerAuth.error };
   }
 
-  var rankRewards = OVERRUN_RANK_REWARDS[guildRanking];
   var weekDates = getWeekDates();
   var sundayDate = getCurrentWeekSundayDate();
 
   var overrunPlayerState = getOverrunPlayerStateByReward(auctionSheet, dataSheet, weekDates);
-  var distribution = buildOverrunDistribution(overrunPlayerState, rankRewards);
+  var cardPlayers = ((overrunPlayerState.playersByReward || {})["Card Frag(Prio from Elite)"] || []).length;
+  var totalCardRewards = Number(rankRewards["Card Frag(Prio from Elite)"] || 0);
+  var succeedingCardRewards = Math.max(totalCardRewards - cardPlayers, 0);
+  var officerCardQuantity = 0;
+  if (officerCardBenefit && officerCardQuantityRequested > 0 && officerCardRecipients.length > 0) {
+    officerCardQuantity = Math.min(officerCardQuantityRequested, succeedingCardRewards, officerCardRecipients.length);
+  }
+
+  var rewardsForPlayers = {
+    "LND": Number(rankRewards["LND"] || 0),
+    "TNS": Number(rankRewards["TNS"] || 0),
+    "Card Frag(Prio from Elite)": Math.max(0, totalCardRewards - officerCardQuantity),
+  };
+
+  var distribution = buildOverrunDistribution(overrunPlayerState, rewardsForPlayers);
 
   var sundayRows = [];
   var featherRewards = ["LND", "TNS"];
@@ -203,6 +233,16 @@ function handleGenerateOverrunRewards(params) {
     cardSlot = cardEndSlot + 1;
   }
 
+  if (officerCardQuantity > 0) {
+    for (var oc = 0; oc < officerCardQuantity; oc++) {
+      var officerName = officerCardRecipients[oc];
+      var officerCardStartSlot = cardSlot;
+      var officerCardEndSlot = cardSlot;
+      sundayRows.push([officerName, "Card Frag(Prio from Elite)", "Unclaimed", computePageString(officerCardStartSlot, officerCardEndSlot), sundayDate]);
+      cardSlot = officerCardEndSlot + 1;
+    }
+  }
+
   if (sundayRows.length > 0) {
     var insertStart = dataSheet.getLastRow() + 1;
     dataSheet.getRange(insertStart, 1, sundayRows.length, 5).setValues(sundayRows);
@@ -213,12 +253,68 @@ function handleGenerateOverrunRewards(params) {
 
   return {
     success: true,
+    groupRanking: groupRanking,
     guildRanking: guildRanking,
     sundayDate: sundayDate,
     rowsInserted: sundayRows.length,
     cycledRowsUpdated: cycledRowsUpdated,
+    officerCardBenefit: officerCardBenefit,
+    officerCardGranted: officerCardQuantity,
+    officerCardRecipients: officerCardRecipients.slice(0, officerCardQuantity),
     distribution: distribution,
   };
+}
+
+function parseOfficerCardRecipients(rawValue) {
+  var text = String(rawValue || "").trim();
+  if (!text) {
+    return [];
+  }
+
+  var parsed = [];
+  try {
+    var json = JSON.parse(text);
+    if (Object.prototype.toString.call(json) === "[object Array]") {
+      parsed = json;
+    }
+  } catch (err) {
+    parsed = text.split(",");
+  }
+
+  var unique = [];
+  var seen = {};
+  for (var i = 0; i < parsed.length; i++) {
+    var ign = String(parsed[i] || "").trim();
+    if (!ign) {
+      continue;
+    }
+    var key = ign.toLowerCase();
+    if (seen[key]) {
+      continue;
+    }
+    seen[key] = true;
+    unique.push(ign);
+  }
+
+  return unique;
+}
+
+function getOverrunRankRewards(groupRanking, guildRanking) {
+  var groupRewards = OVERRUN_GROUP_RANK_REWARDS[groupRanking];
+  if (!groupRewards) {
+    return null;
+  }
+
+  var rankKey = String(guildRanking || "").trim();
+  if (groupRanking === "beginner" && Number(rankKey) >= 8) {
+    rankKey = "8+";
+  }
+
+  if (!groupRewards[rankKey]) {
+    return null;
+  }
+
+  return groupRewards[rankKey];
 }
 
 function handleClearAuctionData(params) {
@@ -629,14 +725,11 @@ function getOverrunPlayerStateByReward(auctionSheet, dataSheet, weekDates) {
     "Card Frag(Prio from Elite)": [],
   };
 
-  for (var r = 0; r < rewardOrder.length; r++) {
-    var rewardKey = rewardOrder[r];
-    var col = headers[rewardKey];
-    if (!col) {
-      continue;
-    }
-    playersByReward[rewardKey] = uniqueStrings(readNonEmptyColumnValues(auctionSheet, col, 2));
-  }
+  var existingWeekRecipientsByReward = {
+    "LND": {},
+    "TNS": {},
+    "Card Frag(Prio from Elite)": {},
+  };
 
   var weeklyTotalsByReward = {
     "LND": {},
@@ -662,12 +755,31 @@ function getOverrunPlayerStateByReward(auctionSheet, dataSheet, weekDates) {
         continue;
       }
 
-      var quantity = countSlotsFromPageString(pages);
       var ignKey = ign.toLowerCase();
+      existingWeekRecipientsByReward[reward][ignKey] = true;
+
+      var quantity = countSlotsFromPageString(pages);
       if (!weeklyTotalsByReward[reward][ignKey]) {
         weeklyTotalsByReward[reward][ignKey] = 0;
       }
       weeklyTotalsByReward[reward][ignKey] += quantity;
+    }
+  }
+
+  for (var r = 0; r < rewardOrder.length; r++) {
+    var rewardKey = rewardOrder[r];
+    var col = headers[rewardKey];
+    if (!col) {
+      continue;
+    }
+
+    var uniquePlayers = uniqueStrings(readNonEmptyColumnValues(auctionSheet, col, 2));
+    if (rewardKey === "Card Frag(Prio from Elite)") {
+      playersByReward[rewardKey] = uniquePlayers.filter(function(ign) {
+        return !existingWeekRecipientsByReward[rewardKey][String(ign || "").toLowerCase()];
+      });
+    } else {
+      playersByReward[rewardKey] = uniquePlayers;
     }
   }
 

@@ -12,7 +12,7 @@ const MEMBERS_SHEET_NAME = "ROOC Members Data";
 const MEMBERS_DATA_GID = "114714217";
 const TRIGGER_SHEET_GID = "1887602829";
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_RDz69e20usRPaJw8lz4bdbVjZiAYhNHE26_Wjiqm9G00aq-EeUq3Ru9OuxIe3vncNA/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6OccAuC1y97sR7aUUhezZJrJ7HV0wKWVmJg1AP1s2IV6tjkcXw1ZaJ0WObw4KDw8yTg/exec";
 
 const REWARD_OPTIONS = [
   { label: "Light and Dark", value: "LND" },
@@ -36,7 +36,7 @@ const GL_TIER_OPTIONS = [
   { label: "Bright Sun",    value: "Bright Sun",    totals: { LND: 55,  TNS: 100, "Card Frag(Prio from Elite)": 2 } },
 ];
 
-const OVERRUN_RANK_OPTIONS = [
+const ADVANCED_OVERRUN_RANK_OPTIONS = [
   { label: "Rank 1", value: "1" },
   { label: "Rank 2", value: "2" },
   { label: "Rank 3", value: "3" },
@@ -46,6 +46,45 @@ const OVERRUN_RANK_OPTIONS = [
   { label: "Rank 7", value: "7" },
   { label: "Rank 8", value: "8" },
 ];
+
+const BEGINNER_OVERRUN_RANK_OPTIONS = [
+  { label: "Rank 1", value: "1" },
+  { label: "Rank 2", value: "2" },
+  { label: "Rank 3", value: "3" },
+  { label: "Rank 4", value: "4" },
+  { label: "Rank 5", value: "5" },
+  { label: "Rank 6", value: "6" },
+  { label: "Rank 7", value: "7" },
+  { label: "Rank 8 and below", value: "8+" },
+];
+
+const OVERRUN_GROUP_OPTIONS = [
+  { label: "Advanced Group", value: "advanced" },
+  { label: "Beginner Group", value: "beginner" },
+];
+
+const OVERRUN_GROUP_RANK_REWARDS = {
+  advanced: {
+    "1": { LND: 150, TNS: 170, "Card Frag(Prio from Elite)": 20 },
+    "2": { LND: 140, TNS: 160, "Card Frag(Prio from Elite)": 20 },
+    "3": { LND: 140, TNS: 160, "Card Frag(Prio from Elite)": 20 },
+    "4": { LND: 120, TNS: 150, "Card Frag(Prio from Elite)": 15 },
+    "5": { LND: 120, TNS: 150, "Card Frag(Prio from Elite)": 15 },
+    "6": { LND: 120, TNS: 150, "Card Frag(Prio from Elite)": 15 },
+    "7": { LND: 100, TNS: 150, "Card Frag(Prio from Elite)": 12 },
+    "8": { LND: 100, TNS: 150, "Card Frag(Prio from Elite)": 12 },
+  },
+  beginner: {
+    "1": { LND: 80, TNS: 140, "Card Frag(Prio from Elite)": 10 },
+    "2": { LND: 75, TNS: 130, "Card Frag(Prio from Elite)": 9 },
+    "3": { LND: 70, TNS: 120, "Card Frag(Prio from Elite)": 8 },
+    "4": { LND: 65, TNS: 110, "Card Frag(Prio from Elite)": 5 },
+    "5": { LND: 60, TNS: 100, "Card Frag(Prio from Elite)": 5 },
+    "6": { LND: 50, TNS: 80, "Card Frag(Prio from Elite)": 5 },
+    "7": { LND: 30, TNS: 30, "Card Frag(Prio from Elite)": 2 },
+    "8+": { LND: 20, TNS: 20, "Card Frag(Prio from Elite)": 1 },
+  },
+};
 
 function createEmptyRewardColumns() {
   return {
@@ -357,7 +396,10 @@ export default function HomePage() {
   const [showOverrunModal, setShowOverrunModal] = useState(false);
   const [overrunOfficerIGN, setOverrunOfficerIGN] = useState("");
   const [overrunGameId, setOverrunGameId] = useState("");
+  const [selectedOverrunGroup, setSelectedOverrunGroup] = useState("");
   const [selectedOverrunRank, setSelectedOverrunRank] = useState("");
+  const [officerCardBenefitEnabled, setOfficerCardBenefitEnabled] = useState(false);
+  const [selectedOfficerCardRecipients, setSelectedOfficerCardRecipients] = useState([]);
   const [isGeneratingOverrun, setIsGeneratingOverrun] = useState(false);
   const [overrunResult, setOverrunResult] = useState(null);
 
@@ -841,7 +883,10 @@ export default function HomePage() {
     setShowOverrunModal(true);
     setOverrunOfficerIGN("");
     setOverrunGameId("");
+    setSelectedOverrunGroup("");
     setSelectedOverrunRank("");
+    setOfficerCardBenefitEnabled(false);
+    setSelectedOfficerCardRecipients([]);
     setOverrunResult(null);
     fetchMembersData();
   }, [fetchMembersData]);
@@ -852,54 +897,6 @@ export default function HomePage() {
     }
     setShowOverrunModal(false);
   }, [isGeneratingOverrun]);
-
-  const handleGenerateOverrunRewards = useCallback(() => {
-    if (!overrunOfficerIGN || !overrunGameId || !selectedOverrunRank || isGeneratingOverrun) {
-      return;
-    }
-
-    if (!APPS_SCRIPT_URL) {
-      setOverrunResult({ type: "error", message: "APPS_SCRIPT_URL is not set in page.js." });
-      return;
-    }
-
-    setIsGeneratingOverrun(true);
-    setOverrunResult(null);
-
-    const params = new URLSearchParams({
-      action: "generateOverrunRewards",
-      triggerIgn: overrunOfficerIGN,
-      gameId: overrunGameId,
-      guildRanking: selectedOverrunRank,
-    });
-
-    fetch(`${APPS_SCRIPT_URL}?${params.toString()}`, { redirect: "follow" })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        setIsGeneratingOverrun(false);
-        if (!data.success) {
-          setOverrunResult({ type: "error", message: data.error || "Generate Overrun Rewards failed." });
-          return;
-        }
-
-        const rowsInserted = Number(data.rowsInserted || 0);
-        const cycledRows = Number(data.cycledRowsUpdated || 0);
-        setOverrunResult({
-          type: "success",
-          message: `Overrun rewards generated. Added ${rowsInserted} row(s)${cycledRows > 0 ? ` and updated ${cycledRows} cycled row(s)` : ""}.`,
-        });
-        loadSheet();
-      })
-      .catch((error) => {
-        setIsGeneratingOverrun(false);
-        setOverrunResult({ type: "error", message: `Request failed: ${error.message}` });
-      });
-  }, [isGeneratingOverrun, loadSheet, overrunGameId, overrunOfficerIGN, selectedOverrunRank]);
 
   const handleCloseClearModal = useCallback(() => {
     if (isClearing) {
@@ -1131,6 +1128,128 @@ export default function HomePage() {
     () => pendingRouletteByReward.LND.length + pendingRouletteByReward.TNS.length + pendingRouletteByReward["Card Frag(Prio from Elite)"].length,
     [pendingRouletteByReward]
   );
+
+  const overrunRankOptions = useMemo(() => {
+    if (selectedOverrunGroup === "advanced") {
+      return ADVANCED_OVERRUN_RANK_OPTIONS;
+    }
+
+    if (selectedOverrunGroup === "beginner") {
+      return BEGINNER_OVERRUN_RANK_OPTIONS;
+    }
+
+    return [];
+  }, [selectedOverrunGroup]);
+
+  const selectedOverrunRewards = useMemo(() => {
+    const groupRewards = OVERRUN_GROUP_RANK_REWARDS[selectedOverrunGroup] || null;
+    if (!groupRewards) {
+      return null;
+    }
+
+    return groupRewards[selectedOverrunRank] || null;
+  }, [selectedOverrunGroup, selectedOverrunRank]);
+
+  const overrunSucceedingCardRaw = useMemo(() => {
+    const selectedCardAmount = Number((selectedOverrunRewards || {})["Card Frag(Prio from Elite)"] || 0);
+    const pendingCardPlayers = pendingRouletteByReward["Card Frag(Prio from Elite)"].length;
+    return Math.max(selectedCardAmount - pendingCardPlayers, 0);
+  }, [pendingRouletteByReward, selectedOverrunRewards]);
+
+  const overrunSucceedingCardRemaining = useMemo(
+    () => overrunSucceedingCardRaw,
+    [overrunSucceedingCardRaw]
+  );
+
+  useEffect(() => {
+    setSelectedOfficerCardRecipients((current) => current.slice(0, overrunSucceedingCardRemaining));
+  }, [overrunSucceedingCardRemaining]);
+
+  const selectedOfficerCardCount = useMemo(
+    () => selectedOfficerCardRecipients.length,
+    [selectedOfficerCardRecipients]
+  );
+
+  const toggleOfficerCardRecipient = useCallback((officerIgn) => {
+    setSelectedOfficerCardRecipients((current) => {
+      if (current.includes(officerIgn)) {
+        return current.filter((name) => name !== officerIgn);
+      }
+
+      if (current.length >= overrunSucceedingCardRemaining) {
+        return current;
+      }
+
+      return [...current, officerIgn];
+    });
+  }, [overrunSucceedingCardRemaining]);
+
+  const handleGenerateOverrunRewards = useCallback(() => {
+    if (!overrunOfficerIGN || !overrunGameId || !selectedOverrunGroup || !selectedOverrunRank || isGeneratingOverrun) {
+      return;
+    }
+
+    if (!APPS_SCRIPT_URL) {
+      setOverrunResult({ type: "error", message: "APPS_SCRIPT_URL is not set in page.js." });
+      return;
+    }
+
+    setIsGeneratingOverrun(true);
+    setOverrunResult(null);
+
+    const params = new URLSearchParams({
+      action: "generateOverrunRewards",
+      triggerIgn: overrunOfficerIGN,
+      gameId: overrunGameId,
+      groupRanking: selectedOverrunGroup,
+      guildRanking: selectedOverrunRank,
+      officerCardBenefit: officerCardBenefitEnabled ? "true" : "false",
+      officerCardQuantity: String(officerCardBenefitEnabled ? selectedOfficerCardCount : 0),
+      officerCardRecipients: officerCardBenefitEnabled ? JSON.stringify(selectedOfficerCardRecipients) : "[]",
+    });
+
+    fetch(`${APPS_SCRIPT_URL}?${params.toString()}`, { redirect: "follow" })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setIsGeneratingOverrun(false);
+        if (!data.success) {
+          setOverrunResult({ type: "error", message: data.error || "Generate Overrun Rewards failed." });
+          return;
+        }
+
+        const rowsInserted = Number(data.rowsInserted || 0);
+        const cycledRows = Number(data.cycledRowsUpdated || 0);
+        const officerCardRecipients = Array.isArray(data.officerCardRecipients) ? data.officerCardRecipients : [];
+        const officerCardGranted = Number(data.officerCardGranted || 0);
+        const officerCardSummary = officerCardGranted > 0 && officerCardRecipients.length > 0
+          ? ` Officer Card recipients: ${officerCardRecipients.join(", ")}.`
+          : "";
+        setOverrunResult({
+          type: "success",
+          message: `Overrun rewards generated. Added ${rowsInserted} row(s)${cycledRows > 0 ? ` and updated ${cycledRows} cycled row(s)` : ""}.${officerCardSummary}`,
+        });
+        loadSheet();
+      })
+      .catch((error) => {
+        setIsGeneratingOverrun(false);
+        setOverrunResult({ type: "error", message: `Request failed: ${error.message}` });
+      });
+  }, [
+    isGeneratingOverrun,
+    loadSheet,
+    officerCardBenefitEnabled,
+    overrunGameId,
+    overrunOfficerIGN,
+    selectedOfficerCardCount,
+    selectedOfficerCardRecipients,
+    selectedOverrunGroup,
+    selectedOverrunRank,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -1403,6 +1522,9 @@ export default function HomePage() {
                     disabled={officerOptions.length === 0}
                   />
                 )}
+                <p className="modal-note modal-note--tiny">
+                  Any succedding amount of Cards from the Emperium Overrun will receive by Officer kapalit pagtulong on managing our guild.
+                </p>
               </div>
 
               <div className="modal-field">
@@ -1480,19 +1602,93 @@ export default function HomePage() {
                 />
               </div>
 
+              <div className="overrun-rank-row">
+                <div className="modal-field">
+                  <label className="modal-label" htmlFor="overrunGroupSelect">Group Ranking</label>
+                  <select
+                    id="overrunGroupSelect"
+                    className="modal-input modal-select"
+                    value={selectedOverrunGroup}
+                    onChange={(event) => {
+                      setSelectedOverrunGroup(event.target.value);
+                      setSelectedOverrunRank("");
+                    }}
+                  >
+                    <option value="">Select group…</option>
+                    {OVERRUN_GROUP_OPTIONS.map((group) => (
+                      <option key={group.value} value={group.value}>{group.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="modal-field">
+                  <label className="modal-label" htmlFor="overrunRankSelect">Guild Ranking</label>
+                  <select
+                    id="overrunRankSelect"
+                    className="modal-input modal-select"
+                    value={selectedOverrunRank}
+                    onChange={(event) => setSelectedOverrunRank(event.target.value)}
+                    disabled={!selectedOverrunGroup}
+                  >
+                    <option value="">Select rank…</option>
+                    {overrunRankOptions.map((rank) => (
+                      <option key={rank.value} value={rank.value}>{rank.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {selectedOverrunRewards && (
+                <p className="modal-note modal-note--tiny overrun-reward-preview">
+                  Rewards [LND/TNS/Card]: {selectedOverrunRewards.LND}/{selectedOverrunRewards.TNS}/{selectedOverrunRewards["Card Frag(Prio from Elite)"]}
+                </p>
+              )}
+
               <div className="modal-field">
-                <label className="modal-label" htmlFor="overrunRankSelect">Guild Ranking</label>
-                <select
-                  id="overrunRankSelect"
-                  className="modal-input modal-select"
-                  value={selectedOverrunRank}
-                  onChange={(event) => setSelectedOverrunRank(event.target.value)}
-                >
-                  <option value="">Select rank…</option>
-                  {OVERRUN_RANK_OPTIONS.map((rank) => (
-                    <option key={rank.value} value={rank.value}>{rank.label}</option>
-                  ))}
-                </select>
+                <label className="officer-benefit-toggle" htmlFor="officerCardBenefit">
+                  <input
+                    id="officerCardBenefit"
+                    type="checkbox"
+                    checked={officerCardBenefitEnabled}
+                    onChange={(event) => {
+                      const checked = event.target.checked;
+                      setOfficerCardBenefitEnabled(checked);
+                      if (!checked) {
+                        setSelectedOfficerCardRecipients([]);
+                      }
+                    }}
+                  />
+                  <span className="officer-benefit-toggle-ui" aria-hidden="true" />
+                  <span className="officer-benefit-toggle-text">Officer Card Benefit</span>
+                </label>
+
+                {officerCardBenefitEnabled && (
+                  <div className="officer-benefit-list" role="group" aria-label="Officer Card Benefit Recipients">
+                    {officerOptions.map((officerIgn) => {
+                      const selected = selectedOfficerCardRecipients.includes(officerIgn);
+                      const lockUnselected = !selected && selectedOfficerCardCount >= overrunSucceedingCardRemaining;
+                      return (
+                        <label key={`benefit-${officerIgn}`} className={`officer-benefit-item${selected ? " officer-benefit-item--active" : ""}`}>
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            disabled={lockUnselected || overrunSucceedingCardRemaining === 0}
+                            onChange={() => toggleOfficerCardRecipient(officerIgn)}
+                          />
+                          <span>{officerIgn}</span>
+                        </label>
+                      );
+                    })}
+                    {officerOptions.length === 0 && <p className="modal-note modal-note--tiny">No officers available.</p>}
+                  </div>
+                )}
+
+                <p className="modal-note modal-note--tiny">
+                  Excess Card Fragment Remaining {selectedOfficerCardCount}/{overrunSucceedingCardRemaining}
+                </p>
+                <p className="modal-note modal-note--tiny">
+                  Based on selected group/rank and pending Card Fragment players: {pendingRouletteByReward["Card Frag(Prio from Elite)"].length}
+                </p>
               </div>
 
               {overrunResult && (
@@ -1510,7 +1706,7 @@ export default function HomePage() {
                 type="button"
                 className="btn-overrun"
                 onClick={handleGenerateOverrunRewards}
-                disabled={!overrunOfficerIGN || !overrunGameId || !selectedOverrunRank || isGeneratingOverrun}
+                disabled={!overrunOfficerIGN || !overrunGameId || !selectedOverrunGroup || !selectedOverrunRank || isGeneratingOverrun}
               >
                 {isGeneratingOverrun ? "Generating..." : "Generate"}
               </button>
