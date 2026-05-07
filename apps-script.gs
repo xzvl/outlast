@@ -85,16 +85,34 @@ function doGet(e) {
 }
 
 function handleClaimAuctionDate(params) {
+  var triggerIgn = (params.triggerIgn || "").trim();
+  var gameId = (params.gameId || "").trim();
   var auctionDate = String(params.auctionDate || "").trim();
   var normalizedAuctionDate = normalizeAuctionDateValue(auctionDate);
+
+  if (!triggerIgn || !gameId) {
+    return { error: "Missing triggerIgn or gameId parameter." };
+  }
+
   if (!auctionDate) {
     return { error: "Missing auctionDate parameter." };
   }
 
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var membersSheet = ss.getSheetByName(MEMBERS_SHEET_NAME);
   var dataSheet = ss.getSheetByName(AUCTION_DATA_SHEET_NAME);
+
+  if (!membersSheet) {
+    return { error: "Sheet \"" + MEMBERS_SHEET_NAME + "\" not found." };
+  }
+
   if (!dataSheet) {
     return { error: "Sheet \"" + AUCTION_DATA_SHEET_NAME + "\" not found." };
+  }
+
+  var randomizerAuth = validateRandomizerAuth(membersSheet, triggerIgn, gameId);
+  if (!randomizerAuth.success) {
+    return { error: randomizerAuth.error };
   }
 
   var lastRow = dataSheet.getLastRow();

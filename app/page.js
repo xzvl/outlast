@@ -12,7 +12,7 @@ const MEMBERS_SHEET_NAME = "ROOC Members Data";
 const MEMBERS_DATA_GID = "114714217";
 const TRIGGER_SHEET_GID = "1887602829";
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6OccAuC1y97sR7aUUhezZJrJ7HV0wKWVmJg1AP1s2IV6tjkcXw1ZaJ0WObw4KDw8yTg/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-PTg00o4UDk0QrDDvkSiqCo2hi0xmfz0LYkkp53JRXqPMnC0SU0sgZdWfUuATgJYs1g/exec";
 
 const REWARD_OPTIONS = [
   { label: "Light and Dark", value: "LND" },
@@ -408,7 +408,12 @@ export default function HomePage() {
   const [clearGameId, setClearGameId] = useState("");
   const [isClearing, setIsClearing] = useState(false);
   const [clearResult, setClearResult] = useState(null);
-  const [claimingDate, setClaimingDate] = useState("");
+  const [showClaimModal, setShowClaimModal] = useState(false);
+  const [claimOfficerIGN, setClaimOfficerIGN] = useState("");
+  const [claimGameId, setClaimGameId] = useState("");
+  const [claimAuctionDate, setClaimAuctionDate] = useState("");
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [claimResult, setClaimResult] = useState(null);
   const [isCopyToastVisible, setIsCopyToastVisible] = useState(false);
 
   const isFirstLoadRef = useRef(true);
@@ -879,6 +884,15 @@ export default function HomePage() {
     fetchMembersData();
   }, [fetchMembersData]);
 
+  const handleOpenClaimModal = useCallback((auctionDate) => {
+    setShowClaimModal(true);
+    setClaimOfficerIGN("");
+    setClaimGameId("");
+    setClaimAuctionDate(auctionDate);
+    setClaimResult(null);
+    fetchMembersData();
+  }, [fetchMembersData]);
+
   const handleOpenOverrunModal = useCallback(() => {
     setShowOverrunModal(true);
     setOverrunOfficerIGN("");
@@ -904,6 +918,13 @@ export default function HomePage() {
     }
     setShowClearModal(false);
   }, [isClearing]);
+
+  const handleCloseClaimModal = useCallback(() => {
+    if (isClaiming) {
+      return;
+    }
+    setShowClaimModal(false);
+  }, [isClaiming]);
 
   const handleClearAuctionData = useCallback(() => {
     if (!clearOfficerIGN || !clearGameId || isClearing) {
@@ -950,19 +971,23 @@ export default function HomePage() {
       });
   }, [clearGameId, clearOfficerIGN, isClearing, loadSheet]);
 
-  const handleClaimDate = useCallback((auctionDate) => {
-    if (!auctionDate || claimingDate) {
+  const handleClaimDate = useCallback(() => {
+    if (!claimAuctionDate || !claimOfficerIGN || !claimGameId || isClaiming) {
       return;
     }
 
     if (!APPS_SCRIPT_URL) {
+      setClaimResult({ type: "error", message: "APPS_SCRIPT_URL is not set in page.js." });
       return;
     }
 
-    setClaimingDate(auctionDate);
+    setIsClaiming(true);
+    setClaimResult(null);
     const params = new URLSearchParams({
       action: "claimAuctionDate",
-      auctionDate,
+      triggerIgn: claimOfficerIGN,
+      gameId: claimGameId,
+      auctionDate: claimAuctionDate,
     });
 
     fetch(`${APPS_SCRIPT_URL}?${params.toString()}`, { redirect: "follow" })
@@ -973,16 +998,23 @@ export default function HomePage() {
         return res.json();
       })
       .then((data) => {
-        setClaimingDate("");
+        setIsClaiming(false);
         if (!data.success) {
+          setClaimResult({ type: "error", message: data.error || "Claim failed." });
           return;
         }
+
+        setClaimResult({ type: "success", message: `Auction date ${claimAuctionDate} marked as claimed.` });
         loadSheet();
+        window.setTimeout(() => {
+          setShowClaimModal(false);
+        }, 900);
       })
-      .catch(() => {
-        setClaimingDate("");
+      .catch((error) => {
+        setIsClaiming(false);
+        setClaimResult({ type: "error", message: `Request failed: ${error.message}` });
       });
-  }, [claimingDate, loadSheet]);
+  }, [claimAuctionDate, claimGameId, claimOfficerIGN, isClaiming, loadSheet]);
 
   const triggerCopyToast = useCallback(() => {
     if (copyToastTimeoutRef.current) {
@@ -1522,9 +1554,6 @@ export default function HomePage() {
                     disabled={officerOptions.length === 0}
                   />
                 )}
-                <p className="modal-note modal-note--tiny">
-                  Any succedding amount of Cards from the Emperium Overrun will receive by Officer kapalit pagtulong on managing our guild.
-                </p>
               </div>
 
               <div className="modal-field">
@@ -1557,6 +1586,80 @@ export default function HomePage() {
                 disabled={!clearOfficerIGN || !clearGameId || isClearing}
               >
                 {isClearing ? "Clearing..." : "Clear"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showClaimModal && (
+        <div className="modal-overlay" onClick={handleCloseClaimModal}>
+          <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Claim Auction Date</h2>
+              <button type="button" className="modal-close" onClick={handleCloseClaimModal} aria-label="Close" disabled={isClaiming}>✕</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="modal-field">
+                <label className="modal-label">Officer</label>
+                {isFetchingMembers ? (
+                  <div className="modal-loading">Loading officers…</div>
+                ) : (
+                  <SelectField
+                    options={officerOptions}
+                    value={claimOfficerIGN}
+                    onChange={setClaimOfficerIGN}
+                    placeholder={officerOptions.length > 0 ? "Officer" : "No officer roles found"}
+                    searchPlaceholder="Search officer IGN…"
+                    toLabel={(option) => option}
+                    toValue={(option) => option}
+                    disabled={officerOptions.length === 0}
+                  />
+                )}
+              </div>
+
+              <div className="modal-field">
+                <label className="modal-label" htmlFor="claimAuctionDate">Auction Date</label>
+                <input
+                  id="claimAuctionDate"
+                  className="modal-input"
+                  type="text"
+                  value={claimAuctionDate}
+                  readOnly
+                />
+              </div>
+
+              <div className="modal-field">
+                <label className="modal-label" htmlFor="claimGameId">Game ID (password)</label>
+                <input
+                  id="claimGameId"
+                  className="modal-input"
+                  type="password"
+                  value={claimGameId}
+                  onChange={(event) => setClaimGameId(event.target.value)}
+                  placeholder="Game ID"
+                />
+              </div>
+
+              {claimResult && (
+                <div className={`modal-result modal-result--${claimResult.type}`}>
+                  {claimResult.message}
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="btn-cancel" onClick={handleCloseClaimModal} disabled={isClaiming}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="table-title-btn table-title-btn--claim"
+                onClick={handleClaimDate}
+                disabled={!claimOfficerIGN || !claimGameId || !claimAuctionDate || isClaiming}
+              >
+                {isClaiming ? "Claiming..." : "Claimed"}
               </button>
             </div>
           </div>
@@ -1777,10 +1880,10 @@ Guild members can submit their IGN for specific auction rewards, and the system 
                         <button
                           type="button"
                           className="table-title-btn table-title-btn--claim"
-                          onClick={() => handleClaimDate(date)}
-                          disabled={claimingDate === date}
+                          onClick={() => handleOpenClaimModal(date)}
+                          disabled={isClaiming && claimAuctionDate === date}
                         >
-                          {claimingDate === date ? "Claiming..." : "Claimed"}
+                          {isClaiming && claimAuctionDate === date ? "Claiming..." : "Claimed"}
                         </button>
                         <button
                           type="button"
