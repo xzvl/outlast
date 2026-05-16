@@ -16,37 +16,37 @@ var TRIGGER_SHEET_NAME = "ROOC Auction Randomizer Trigger";
 var AUCTION_DATA_SHEET_NAME = "ROOC Auction Data";
 
 var PER_PLAYER_DEFAULTS_GS = {
-  "LND": 6,
-  "TNS": 10,
-  "Card Frag(Prio from Elite)": 1,
+  "LND": 3,
+  "TNS": 5,
+  "Card Fragment": 1,
 };
 
 var REWARD_COLUMNS = [
   "LND",
   "TNS",
-  "Card Frag(Prio from Elite)",
+  "Card Fragment",
 ];
 
 var OVERRUN_GROUP_RANK_REWARDS = {
   "advanced": {
-    "1": { "LND": 150, "TNS": 170, "Card Frag(Prio from Elite)": 20 },
-    "2": { "LND": 140, "TNS": 160, "Card Frag(Prio from Elite)": 20 },
-    "3": { "LND": 140, "TNS": 160, "Card Frag(Prio from Elite)": 20 },
-    "4": { "LND": 120, "TNS": 150, "Card Frag(Prio from Elite)": 15 },
-    "5": { "LND": 120, "TNS": 150, "Card Frag(Prio from Elite)": 15 },
-    "6": { "LND": 120, "TNS": 150, "Card Frag(Prio from Elite)": 15 },
-    "7": { "LND": 100, "TNS": 150, "Card Frag(Prio from Elite)": 12 },
-    "8": { "LND": 100, "TNS": 150, "Card Frag(Prio from Elite)": 12 },
+    "1": { "LND": 150, "TNS": 170, "Card Fragment": 20 },
+    "2": { "LND": 140, "TNS": 160, "Card Fragment": 20 },
+    "3": { "LND": 140, "TNS": 160, "Card Fragment": 20 },
+    "4": { "LND": 120, "TNS": 150, "Card Fragment": 15 },
+    "5": { "LND": 120, "TNS": 150, "Card Fragment": 15 },
+    "6": { "LND": 120, "TNS": 150, "Card Fragment": 15 },
+    "7": { "LND": 100, "TNS": 150, "Card Fragment": 12 },
+    "8": { "LND": 100, "TNS": 150, "Card Fragment": 12 },
   },
   "beginner": {
-    "1": { "LND": 80, "TNS": 140, "Card Frag(Prio from Elite)": 10 },
-    "2": { "LND": 75, "TNS": 130, "Card Frag(Prio from Elite)": 9 },
-    "3": { "LND": 70, "TNS": 120, "Card Frag(Prio from Elite)": 8 },
-    "4": { "LND": 65, "TNS": 110, "Card Frag(Prio from Elite)": 5 },
-    "5": { "LND": 60, "TNS": 100, "Card Frag(Prio from Elite)": 5 },
-    "6": { "LND": 50, "TNS": 80, "Card Frag(Prio from Elite)": 5 },
-    "7": { "LND": 30, "TNS": 30, "Card Frag(Prio from Elite)": 2 },
-    "8+": { "LND": 20, "TNS": 20, "Card Frag(Prio from Elite)": 1 },
+    "1": { "LND": 80, "TNS": 140, "Card Fragment": 10 },
+    "2": { "LND": 75, "TNS": 130, "Card Fragment": 9 },
+    "3": { "LND": 70, "TNS": 120, "Card Fragment": 8 },
+    "4": { "LND": 65, "TNS": 110, "Card Fragment": 5 },
+    "5": { "LND": 60, "TNS": 100, "Card Fragment": 5 },
+    "6": { "LND": 50, "TNS": 80, "Card Fragment": 5 },
+    "7": { "LND": 30, "TNS": 30, "Card Fragment": 2 },
+    "8+": { "LND": 20, "TNS": 20, "Card Fragment": 1 },
   },
 };
 
@@ -82,6 +82,19 @@ function doGet(e) {
   return ContentService
     .createTextOutput(JSON.stringify(result))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getAuctionDataRowMeta(row) {
+  var hasTabShape = normalizeAuctionDateValue(row[5]) !== "";
+  return {
+    reward: String(row[1] || "").trim(),
+    tab: String((hasTabShape ? row[2] : "") || "").trim(),
+    status: String((hasTabShape ? row[3] : row[2]) || "").trim(),
+    pages: String((hasTabShape ? row[4] : row[3]) || "").trim(),
+    date: normalizeAuctionDateValue(hasTabShape ? row[5] : row[4]),
+    statusColumn: hasTabShape ? 4 : 3,
+    pagesColumn: hasTabShape ? 5 : 4,
+  };
 }
 
 function handleClaimAuctionDate(params) {
@@ -124,29 +137,24 @@ function handleClaimAuctionDate(params) {
     };
   }
 
-  var values = dataSheet.getRange(2, 1, lastRow - 1, 5).getValues();
+  var values = dataSheet.getRange(2, 1, lastRow - 1, 6).getValues();
   var rowsUpdated = 0;
 
   for (var i = 0; i < values.length; i++) {
-    var reward = String(values[i][1] || "").trim();
-    var rowDate = normalizeAuctionDateValue(values[i][4]);
-    if (!reward || !rowDate) {
+    var rowMeta = getAuctionDataRowMeta(values[i]);
+    if (!rowMeta.reward || !rowMeta.date) {
       continue;
     }
 
-    if (rowDate !== normalizedAuctionDate) {
+    if (rowMeta.date !== normalizedAuctionDate) {
       continue;
     }
 
-    values[i][2] = "Claimed";
+    dataSheet.getRange(i + 2, rowMeta.statusColumn).setValue("Claimed");
     rowsUpdated += 1;
   }
 
   if (rowsUpdated > 0) {
-    var statusColumnValues = values.map(function(row) {
-      return [row[2]];
-    });
-    dataSheet.getRange(2, 3, statusColumnValues.length, 1).setValues(statusColumnValues);
     SpreadsheetApp.flush();
   }
 
@@ -162,6 +170,9 @@ function handleGenerateOverrunRewards(params) {
   var gameId = (params.gameId || "").trim();
   var groupRanking = String(params.groupRanking || "").trim().toLowerCase();
   var guildRanking = String(params.guildRanking || "").trim();
+  var perPlayerLND = Math.max(1, Number(params.perPlayerLND || PER_PLAYER_DEFAULTS_GS["LND"] || 1));
+  var perPlayerTNS = Math.max(1, Number(params.perPlayerTNS || PER_PLAYER_DEFAULTS_GS["TNS"] || 1));
+  var perPlayerCard = Math.max(1, Number(params.perPlayerCard || PER_PLAYER_DEFAULTS_GS["Card Fragment"] || 1));
   var officerCardBenefit = String(params.officerCardBenefit || "").trim().toLowerCase() === "true";
   var officerCardQuantityRequested = Math.max(0, Number(params.officerCardQuantity || 0));
   var officerCardRecipients = parseOfficerCardRecipients(params.officerCardRecipients);
@@ -201,25 +212,49 @@ function handleGenerateOverrunRewards(params) {
   var sundayDate = getCurrentWeekSundayDate();
 
   var overrunPlayerState = getOverrunPlayerStateByReward(auctionSheet, dataSheet, weekDates);
-  var cardPlayers = ((overrunPlayerState.playersByReward || {})["Card Frag(Prio from Elite)"] || []).length;
-  var totalCardRewards = Number(rankRewards["Card Frag(Prio from Elite)"] || 0);
-  var succeedingCardRewards = Math.max(totalCardRewards - cardPlayers, 0);
+  var overrunCycleOffsets = getOverrunCycleStartIndexes(overrunPlayerState, dataSheet, weekDates);
+  var cardPlayers = ((overrunPlayerState.playersByReward || {})["Card Fragment"] || []).length;
+  var totalCardRewards = Number(rankRewards["Card Fragment"] || 0);
+  var featherWinnerCount = Math.min(
+    Math.floor(Number(rankRewards["LND"] || 0) / perPlayerLND),
+    Math.floor(Number(rankRewards["TNS"] || 0) / perPlayerTNS)
+  );
+  var totalCardWinnerCount = Math.floor(totalCardRewards / perPlayerCard);
+  var succeedingCardRewards = Math.max(totalCardWinnerCount - cardPlayers, 0);
   var officerCardQuantity = 0;
   if (officerCardBenefit && officerCardQuantityRequested > 0 && officerCardRecipients.length > 0) {
     officerCardQuantity = Math.min(officerCardQuantityRequested, succeedingCardRewards, officerCardRecipients.length);
   }
 
-  var rewardsForPlayers = {
-    "LND": Number(rankRewards["LND"] || 0),
-    "TNS": Number(rankRewards["TNS"] || 0),
-    "Card Frag(Prio from Elite)": Math.max(0, totalCardRewards - officerCardQuantity),
+  var winnerCounts = {
+    "LND": Math.max(featherWinnerCount, 0),
+    "TNS": Math.max(featherWinnerCount, 0),
+    "Card Fragment": Math.max(0, totalCardWinnerCount - officerCardQuantity),
+  };
+  var perPlayerCounts = {
+    "LND": perPlayerLND,
+    "TNS": perPlayerTNS,
+    "Card Fragment": perPlayerCard,
   };
 
-  var distribution = buildOverrunDistribution(overrunPlayerState, rewardsForPlayers);
+  var rewardsForDistribution = {
+    "LND": Number(rankRewards["LND"] || 0),
+    "TNS": Number(rankRewards["TNS"] || 0),
+    "Card Fragment": Math.max(0, totalCardRewards - (officerCardQuantity * perPlayerCounts["Card Fragment"])),
+  };
+
+  var distribution = buildOverrunDistribution(overrunPlayerState, rewardsForDistribution, winnerCounts, perPlayerCounts, overrunCycleOffsets);
 
   var sundayRows = [];
+
+  // Build combined Feather rows (LND + TNS per IGN) for Emperium Overrun
+  var featherPartsByIgn = {};
+  var featherOrder = [];
   var featherRewards = ["LND", "TNS"];
-  var featherSlot = 1;
+  var featherSlotsByReward = {
+    "LND": 1,
+    "TNS": Number(rankRewards["LND"] || 0) + 1,
+  };
   for (var r = 0; r < featherRewards.length; r++) {
     var rewardKey = featherRewards[r];
     var allocations = distribution.allocationsByReward[rewardKey] || [];
@@ -230,14 +265,45 @@ function handleGenerateOverrunRewards(params) {
         continue;
       }
 
-      var startSlot = featherSlot;
-      var endSlot = featherSlot + allocation.quantity - 1;
-      sundayRows.push([allocation.ign, rewardKey, "Unclaimed", computePageString(startSlot, endSlot), sundayDate]);
-      featherSlot = endSlot + 1;
+      var startSlot = featherSlotsByReward[rewardKey];
+      var endSlot = featherSlotsByReward[rewardKey] + (allocation.quantity * perPlayerCounts[rewardKey]) - 1;
+      var pageLabel = computePageString(startSlot, endSlot);
+      featherSlotsByReward[rewardKey] = endSlot + 1;
+
+      var ignKey = allocation.ign.toLowerCase();
+      if (!featherPartsByIgn[ignKey]) {
+        featherPartsByIgn[ignKey] = { ign: allocation.ign, lnd: [], tns: [] };
+        featherOrder.push(ignKey);
+      }
+      if (rewardKey === "LND") {
+        featherPartsByIgn[ignKey].lnd.push(pageLabel);
+      } else {
+        featherPartsByIgn[ignKey].tns.push(pageLabel);
+      }
     }
   }
 
-  var cardAllocations = distribution.allocationsByReward["Card Frag(Prio from Elite)"] || [];
+  for (var f = 0; f < featherOrder.length; f++) {
+    var featherEntry = featherPartsByIgn[featherOrder[f]];
+    var featherParts = [];
+    if (featherEntry.lnd.length > 0) {
+      featherParts.push("LND: " + featherEntry.lnd.join(", "));
+    }
+    if (featherEntry.tns.length > 0) {
+      featherParts.push("TNS: " + featherEntry.tns.join(", "));
+    }
+    if (featherParts.length === 0) {
+      continue;
+    }
+    var featherPageText = featherParts.filter(function(part) {
+      return String(part || "").trim().length > 0 && !String(part || "").match(/^(LND|TNS):\s*$/);
+    }).join(" | ");
+    if (featherPageText.trim().length > 0) {
+      sundayRows.push([featherEntry.ign, "Feather", "Emperium Overrun", "Unclaim", featherPageText, sundayDate]);
+    }
+  }
+
+  var cardAllocations = distribution.allocationsByReward["Card Fragment"] || [];
   var cardSlot = 1;
   for (var c = 0; c < cardAllocations.length; c++) {
     var cardAllocation = cardAllocations[c];
@@ -246,8 +312,8 @@ function handleGenerateOverrunRewards(params) {
     }
 
     var cardStartSlot = cardSlot;
-    var cardEndSlot = cardSlot + cardAllocation.quantity - 1;
-    sundayRows.push([cardAllocation.ign, "Card Frag(Prio from Elite)", "Unclaimed", computePageString(cardStartSlot, cardEndSlot), sundayDate]);
+    var cardEndSlot = cardSlot + (cardAllocation.quantity * perPlayerCounts["Card Fragment"]) - 1;
+    sundayRows.push([cardAllocation.ign, "Card", "Emperium Overrun", "Unclaim", computePageString(cardStartSlot, cardEndSlot), sundayDate]);
     cardSlot = cardEndSlot + 1;
   }
 
@@ -255,18 +321,61 @@ function handleGenerateOverrunRewards(params) {
     for (var oc = 0; oc < officerCardQuantity; oc++) {
       var officerName = officerCardRecipients[oc];
       var officerCardStartSlot = cardSlot;
-      var officerCardEndSlot = cardSlot;
-      sundayRows.push([officerName, "Card Frag(Prio from Elite)", "Unclaimed", computePageString(officerCardStartSlot, officerCardEndSlot), sundayDate]);
+      var officerCardEndSlot = cardSlot + perPlayerCounts["Card Fragment"] - 1;
+      sundayRows.push([officerName, "Card", "Emperium Overrun", "Unclaim", computePageString(officerCardStartSlot, officerCardEndSlot), sundayDate]);
       cardSlot = officerCardEndSlot + 1;
     }
   }
 
-  if (sundayRows.length > 0) {
-    var insertStart = dataSheet.getLastRow() + 1;
-    dataSheet.getRange(insertStart, 1, sundayRows.length, 5).setValues(sundayRows);
+  var freeForAllCounter = 1;
+  var freeForAllLndLeftover = Number(distribution.leftoverByReward["LND"] || 0);
+  var freeForAllTnsLeftover = Number(distribution.leftoverByReward["TNS"] || 0);
+  while (freeForAllLndLeftover > 0 || freeForAllTnsLeftover > 0) {
+    var freeForAllFeatherParts = [];
+
+    if (freeForAllLndLeftover > 0) {
+      var lndChunk = Math.min(perPlayerCounts["LND"], freeForAllLndLeftover);
+      var lndStartSlot = featherSlotsByReward["LND"];
+      var lndEndSlot = lndStartSlot + lndChunk - 1;
+      freeForAllFeatherParts.push("LND: " + computePageString(lndStartSlot, lndEndSlot));
+      featherSlotsByReward["LND"] = lndEndSlot + 1;
+      freeForAllLndLeftover -= lndChunk;
+    }
+
+    if (freeForAllTnsLeftover > 0) {
+      var tnsChunk = Math.min(perPlayerCounts["TNS"], freeForAllTnsLeftover);
+      var tnsStartSlot = featherSlotsByReward["TNS"];
+      var tnsEndSlot = tnsStartSlot + tnsChunk - 1;
+      freeForAllFeatherParts.push("TNS: " + computePageString(tnsStartSlot, tnsEndSlot));
+      featherSlotsByReward["TNS"] = tnsEndSlot + 1;
+      freeForAllTnsLeftover -= tnsChunk;
+    }
+
+    if (freeForAllFeatherParts.length > 0) {
+      var freeForAllPageText = freeForAllFeatherParts.filter(function(part) {
+        return String(part || "").trim().length > 0 && !String(part || "").match(/^(LND|TNS):\s*$/);
+      }).join(" | ");
+      if (freeForAllPageText.trim().length > 0) {
+        sundayRows.push(["FREE FOR ALL - " + freeForAllCounter, "Feather", "Emperium Overrun", "Unclaim", freeForAllPageText, sundayDate]);
+        freeForAllCounter += 1;
+      }
+    }
   }
 
-  var cycledRowsUpdated = applyCycleBackToExistingRows(dataSheet, distribution.leftoverByReward, weekDates);
+  var freeForAllCardLeftover = Number(distribution.leftoverByReward["Card Fragment"] || 0);
+  while (freeForAllCardLeftover > 0) {
+    var cardChunk = Math.min(perPlayerCounts["Card Fragment"], freeForAllCardLeftover);
+    sundayRows.push(["FREE FOR ALL - " + freeForAllCounter, "Card", "Emperium Overrun", "Unclaim", computePageString(cardSlot, cardSlot + cardChunk - 1), sundayDate]);
+    cardSlot += cardChunk;
+    freeForAllCardLeftover -= cardChunk;
+    freeForAllCounter += 1;
+  }
+
+  if (sundayRows.length > 0) {
+    var insertStart = dataSheet.getLastRow() + 1;
+    dataSheet.getRange(insertStart, 1, sundayRows.length, 6).setValues(sundayRows);
+  }
+
   SpreadsheetApp.flush();
 
   return {
@@ -275,7 +384,7 @@ function handleGenerateOverrunRewards(params) {
     guildRanking: guildRanking,
     sundayDate: sundayDate,
     rowsInserted: sundayRows.length,
-    cycledRowsUpdated: cycledRowsUpdated,
+    cycledRowsUpdated: 0,
     officerCardBenefit: officerCardBenefit,
     officerCardGranted: officerCardQuantity,
     officerCardRecipients: officerCardRecipients.slice(0, officerCardQuantity),
@@ -315,6 +424,80 @@ function parseOfficerCardRecipients(rawValue) {
   }
 
   return unique;
+}
+
+function normalizeAuctionDataRewardKeys(reward) {
+  var normalized = String(reward || "").trim().toLowerCase().replace(/\s+/g, "");
+  if (!normalized) {
+    return [];
+  }
+
+  if (normalized === "feather") {
+    return ["LND", "TNS"];
+  }
+
+  if (normalized === "lnd" || normalized.indexOf("lightanddark") !== -1) {
+    return ["LND"];
+  }
+
+  if (normalized === "tns" || normalized.indexOf("timeandspace") !== -1) {
+    return ["TNS"];
+  }
+
+  if (normalized === "card" || normalized.indexOf("cardfrag") !== -1 || normalized.indexOf("cardfragment") !== -1) {
+    return ["Card Fragment"];
+  }
+
+  if (normalized.indexOf("leagueprize") !== -1) {
+    return ["League Prize"];
+  }
+
+  if (normalized.indexOf("illusionfragment") !== -1 || (normalized.indexOf("illusion") !== -1 && normalized.indexOf("fragmentpack") !== -1)) {
+    return ["Illusion Fragment"];
+  }
+
+  return [];
+}
+
+function getAuctionDataPagesByReward(reward, pages) {
+  var pageText = String(pages || "").trim();
+  if (!pageText) {
+    return {};
+  }
+
+  if (String(reward || "").trim().toLowerCase() !== "feather") {
+    var rewardKeys = normalizeAuctionDataRewardKeys(reward);
+    if (rewardKeys.length === 0) {
+      return {};
+    }
+    var singleResult = {};
+    singleResult[rewardKeys[0]] = pageText;
+    return singleResult;
+  }
+
+  var segments = pageText.split("|");
+  var result = {};
+
+  for (var i = 0; i < segments.length; i++) {
+    var segment = String(segments[i] || "").trim();
+    if (!segment) {
+      continue;
+    }
+
+    var separatorIndex = segment.indexOf(":");
+    if (separatorIndex < 0) {
+      continue;
+    }
+
+    var rewardName = segment.slice(0, separatorIndex).trim();
+    var pageValue = segment.slice(separatorIndex + 1).trim();
+    var rewardKeys = normalizeAuctionDataRewardKeys(rewardName);
+    if (rewardKeys.length > 0 && pageValue) {
+      result[rewardKeys[0]] = pageValue;
+    }
+  }
+
+  return result;
 }
 
 function getOverrunRankRewards(groupRanking, guildRanking) {
@@ -402,20 +585,53 @@ function handleInsertIgn(params) {
   }
 
   var headerInfo = getHeaderInfo(auctionSheet);
-  var targetCol = headerInfo.indexByName[reward];
+  var normalizedReward = String(reward || "").trim().toLowerCase();
+  var targetColumns = [];
 
-  if (!targetCol) {
-    return { error: "Column \"" + reward + "\" not found in row 1." };
+  if (normalizedReward === "feather") {
+    var featherCol = getRewardColumnIndexByAliases(headerInfo, "Feather");
+    if (featherCol) {
+      targetColumns.push({ reward: "Feather", column: featherCol });
+    } else {
+      // Backward compatibility for old layouts with split LND/TNS columns.
+      var lndCol = getRewardColumnIndexByAliases(headerInfo, "LND");
+      var tnsCol = getRewardColumnIndexByAliases(headerInfo, "TNS");
+
+      if (!lndCol || !tnsCol) {
+        return { error: "Column \"Feather\" not found in row 1." };
+      }
+
+      targetColumns.push({ reward: "LND", column: lndCol });
+      targetColumns.push({ reward: "TNS", column: tnsCol });
+    }
+  } else {
+    var targetCol = getRewardColumnIndexByAliases(headerInfo, reward);
+    if (!targetCol) {
+      return { error: "Column \"" + reward + "\" not found in row 1." };
+    }
+
+    targetColumns.push({
+      reward: reward,
+      column: targetCol,
+    });
   }
 
-  var targetRow = findFirstEmptyRow(auctionSheet, targetCol, 2);
-  auctionSheet.getRange(targetRow, targetCol).setValue(ign);
+  var insertedRows = [];
+  for (var c = 0; c < targetColumns.length; c++) {
+    var targetInfo = targetColumns[c];
+    var targetRow = findFirstEmptyRow(auctionSheet, targetInfo.column, 2);
+    auctionSheet.getRange(targetRow, targetInfo.column).setValue(ign);
+    insertedRows.push(targetRow);
+  }
+
   SpreadsheetApp.flush();
 
   return {
     success: true,
-    row: targetRow,
-    column: reward,
+    row: insertedRows.length > 0 ? insertedRows[0] : 0,
+    rowsInserted: insertedRows,
+    column: targetColumns.length === 1 ? targetColumns[0].reward : "Feather",
+    columnsInserted: targetColumns.map(function(item) { return item.reward; }),
     gameIdStored: memberCheck.gameIdStored,
   };
 }
@@ -463,6 +679,9 @@ function validateOrSaveMemberGameIdByIgn(membersSheet, ign, inputGameId) {
 function handleRandomize(params) {
   var triggerIgn   = (params.triggerIgn   || "").trim();
   var gameId       = (params.gameId       || "").trim();
+  var selectedDay  = String(params.day || "").trim().toLowerCase();
+  var guildLeagueResult = String(params.guildLeagueResult || "").trim().toLowerCase();
+  var pointDifference = Math.max(0, Number(params.pointDifference || 0));
   var timerSeconds = Number(params.timerSeconds || 1);
 
   // Winner-per-GL and per-player counts sent from the client
@@ -471,7 +690,7 @@ function handleRandomize(params) {
   var winnerPerGLCard = Math.max(0, Number(params.winnerPerGLCard || 0));
   var perPlayerLND    = Math.max(1, Number(params.perPlayerLND    || PER_PLAYER_DEFAULTS_GS["LND"]));
   var perPlayerTNS    = Math.max(1, Number(params.perPlayerTNS    || PER_PLAYER_DEFAULTS_GS["TNS"]));
-  var perPlayerCard   = Math.max(1, Number(params.perPlayerCard   || PER_PLAYER_DEFAULTS_GS["Card Frag(Prio from Elite)"]));
+  var perPlayerCard   = Math.max(1, Number(params.perPlayerCard   || PER_PLAYER_DEFAULTS_GS["Card Fragment"]));
 
   if (!triggerIgn || !gameId) {
     return { error: "Missing triggerIgn or gameId parameter." };
@@ -480,6 +699,13 @@ function handleRandomize(params) {
   if (isNaN(timerSeconds) || timerSeconds <= 0) {
     timerSeconds = 1;
   }
+
+  if (selectedDay !== "tuesday" && selectedDay !== "thursday") {
+    selectedDay = "tuesday";
+  }
+
+  var legacyIncludeLeaguePrize = String(params.guildLeagueWinner || params.includeLeaguePrizeTab || "").trim().toLowerCase() === "true";
+  var leaguePrizeConfig = getLeaguePrizeConfig(guildLeagueResult, pointDifference, legacyIncludeLeaguePrize);
 
   var ss           = SpreadsheetApp.openById(SPREADSHEET_ID);
   var membersSheet = ss.getSheetByName(MEMBERS_SHEET_NAME);
@@ -503,7 +729,8 @@ function handleRandomize(params) {
     return { error: randomizerAuth.error };
   }
 
-  var randomized = randomizeRewardColumns(auctionSheet);
+  var shouldShuffle = selectedDay === "tuesday";
+  var randomized = randomizeRewardColumns(auctionSheet, shouldShuffle);
 
   // Required log format: IGN trigger, Auction Date blank, Trigger Date and Time = now
   triggerSheet.appendRow([
@@ -516,17 +743,18 @@ function handleRandomize(params) {
   var dataSheet = ss.getSheetByName(AUCTION_DATA_SHEET_NAME);
   if (dataSheet) {
     var weekDates = getWeekDates();
+    var auctionDate = selectedDay === "thursday" ? weekDates.thursday : weekDates.tuesday;
     var winnerCounts = {
       "LND": winnerPerGLLND,
       "TNS": winnerPerGLTNS,
-      "Card Frag(Prio from Elite)": winnerPerGLCard,
+      "Card Fragment": winnerPerGLCard,
     };
     var perPlayerCounts = {
       "LND": perPlayerLND,
       "TNS": perPlayerTNS,
-      "Card Frag(Prio from Elite)": perPlayerCard,
+      "Card Fragment": perPlayerCard,
     };
-    saveWinnersToAuctionData(dataSheet, randomized, winnerCounts, perPlayerCounts, weekDates);
+    saveWinnersToAuctionData(dataSheet, randomized, winnerCounts, perPlayerCounts, auctionDate, leaguePrizeConfig, selectedDay, weekDates);
   }
 
   SpreadsheetApp.flush();
@@ -534,17 +762,71 @@ function handleRandomize(params) {
   return {
     success: true,
     timerSeconds: timerSeconds,
+    guildLeagueResult: guildLeagueResult,
+    pointDifference: pointDifference,
+    selectedDay: selectedDay,
+    shuffled: shouldShuffle,
+    leaguePrize: leaguePrizeConfig,
     randomized: randomized,
   };
 }
 
-function randomizeRewardColumns(sheet) {
+function getLeaguePrizeConfig(guildLeagueResult, pointDifference, legacyIncludeLeaguePrize) {
+  var result = String(guildLeagueResult || "").trim().toLowerCase();
+  var diff = Math.max(0, Number(pointDifference || 0));
+
+  if (result === "won") {
+    return { enabled: true, multiplier: 1.0, reason: "victory" };
+  }
+
+  if (result === "lost") {
+    if (diff < 500) {
+      return { enabled: true, multiplier: 0.7, reason: "loss-under-500" };
+    }
+
+    if (diff < 1500) {
+      return { enabled: true, multiplier: 0.5, reason: "loss-under-1500" };
+    }
+
+    return { enabled: false, multiplier: 0, reason: "loss-1500-or-more" };
+  }
+
+  return {
+    enabled: !!legacyIncludeLeaguePrize,
+    multiplier: legacyIncludeLeaguePrize ? 1.0 : 0,
+    reason: legacyIncludeLeaguePrize ? "legacy-enabled" : "legacy-disabled",
+  };
+}
+
+function randomizeRewardColumns(sheet, shouldShuffle) {
   var headerInfo = getHeaderInfo(sheet);
   var randomizedResult = {};
+  var shuffleEnabled = shouldShuffle !== false;
+  var sharedFeatherColumn = getRewardColumnIndexByAliases(headerInfo, "Feather");
+  var sharedFeatherValues = null;
+
+  if (sharedFeatherColumn) {
+    sharedFeatherValues = readNonEmptyColumnValues(sheet, sharedFeatherColumn, 2);
+    if (shuffleEnabled) {
+      fisherYatesShuffle(sharedFeatherValues);
+
+      clearColumnFromRow(sheet, sharedFeatherColumn, 2);
+      if (sharedFeatherValues.length > 0) {
+        var featherOutput = sharedFeatherValues.map(function(name) { return [name]; });
+        sheet.getRange(2, sharedFeatherColumn, featherOutput.length, 1).setValues(featherOutput);
+      }
+    }
+  }
 
   for (var i = 0; i < REWARD_COLUMNS.length; i++) {
     var rewardName = REWARD_COLUMNS[i];
-    var col = headerInfo.indexByName[rewardName];
+
+    if ((rewardName === "LND" || rewardName === "TNS") && sharedFeatherValues !== null) {
+      randomizedResult[rewardName] = sharedFeatherValues.slice();
+      continue;
+    }
+
+    var col = getRewardColumnIndexByAliases(headerInfo, rewardName);
 
     if (!col) {
       randomizedResult[rewardName] = [];
@@ -552,18 +834,48 @@ function randomizeRewardColumns(sheet) {
     }
 
     var values = readNonEmptyColumnValues(sheet, col, 2);
-    fisherYatesShuffle(values);
+    if (shuffleEnabled) {
+      fisherYatesShuffle(values);
 
-    clearColumnFromRow(sheet, col, 2);
-    if (values.length > 0) {
-      var output = values.map(function(name) { return [name]; });
-      sheet.getRange(2, col, output.length, 1).setValues(output);
+      clearColumnFromRow(sheet, col, 2);
+      if (values.length > 0) {
+        var output = values.map(function(name) { return [name]; });
+        sheet.getRange(2, col, output.length, 1).setValues(output);
+      }
     }
 
     randomizedResult[rewardName] = values;
   }
 
   return randomizedResult;
+}
+
+function getRewardColumnIndexByAliases(headerInfo, rewardName) {
+  var headers = (headerInfo && headerInfo.headers) || [];
+  var normalizedHeaders = [];
+  for (var i = 0; i < headers.length; i++) {
+    normalizedHeaders.push(String(headers[i] || "").toLowerCase().replace(/\s+/g, ""));
+  }
+
+  var candidatesByReward = {
+    "Feather": ["feather", "lnd", "tns", "lightanddark", "timeandspace"],
+    "LND": ["lnd", "lightanddark"],
+    "TNS": ["tns", "timeandspace"],
+    "Card Fragment": ["cardfragment", "cardfrag", "card"],
+  };
+
+  var candidates = candidatesByReward[rewardName] || [String(rewardName || "").toLowerCase().replace(/\s+/g, "")];
+
+  for (var c = 0; c < candidates.length; c++) {
+    var candidate = candidates[c];
+    for (var h = 0; h < normalizedHeaders.length; h++) {
+      if (normalizedHeaders[h] === candidate) {
+        return h + 1;
+      }
+    }
+  }
+
+  return 0;
 }
 
 function validateRandomizerAuth(membersSheet, triggerIgn, inputGameId) {
@@ -735,35 +1047,42 @@ function uniqueStrings(values) {
 }
 
 function getOverrunPlayerStateByReward(auctionSheet, dataSheet, weekDates) {
-  var headers = getHeaderInfo(auctionSheet).indexByName;
-  var rewardOrder = ["LND", "TNS", "Card Frag(Prio from Elite)"];
+  var randomizedColumns = randomizeRewardColumns(auctionSheet, false);
+  var rewardOrder = ["LND", "TNS", "Card Fragment"];
   var playersByReward = {
     "LND": [],
     "TNS": [],
-    "Card Frag(Prio from Elite)": [],
+    "Card Fragment": [],
+  };
+  var sourcePlayersByReward = {
+    "LND": [],
+    "TNS": [],
+    "Card Fragment": [],
   };
 
   var existingWeekRecipientsByReward = {
     "LND": {},
     "TNS": {},
-    "Card Frag(Prio from Elite)": {},
+    "Card Fragment": {},
   };
 
   var weeklyTotalsByReward = {
     "LND": {},
     "TNS": {},
-    "Card Frag(Prio from Elite)": {},
+    "Card Fragment": {},
   };
 
   var lastRow = dataSheet.getLastRow();
   if (lastRow >= 2) {
-    var values = dataSheet.getRange(2, 1, lastRow - 1, 5).getValues();
+    var values = dataSheet.getRange(2, 1, lastRow - 1, 6).getValues();
     for (var i = 0; i < values.length; i++) {
       var ign = String(values[i][0] || "").trim();
-      var reward = String(values[i][1] || "").trim();
-      var pages = String(values[i][3] || "").trim();
-      var date = normalizeAuctionDateValue(values[i][4]);
-      if (!ign || !weeklyTotalsByReward[reward]) {
+      var rowMeta = getAuctionDataRowMeta(values[i]);
+      var reward = rowMeta.reward;
+      var pages = rowMeta.pages;
+      var date = rowMeta.date;
+      var rewardKeys = normalizeAuctionDataRewardKeys(reward);
+      if (!ign || rewardKeys.length === 0) {
         continue;
       }
       if (!weekDates) {
@@ -774,25 +1093,31 @@ function getOverrunPlayerStateByReward(auctionSheet, dataSheet, weekDates) {
       }
 
       var ignKey = ign.toLowerCase();
-      existingWeekRecipientsByReward[reward][ignKey] = true;
+      var pagesByReward = getAuctionDataPagesByReward(reward, pages);
 
-      var quantity = countSlotsFromPageString(pages);
-      if (!weeklyTotalsByReward[reward][ignKey]) {
-        weeklyTotalsByReward[reward][ignKey] = 0;
+      for (var rk = 0; rk < rewardKeys.length; rk++) {
+        var rewardKey = rewardKeys[rk];
+        if (!weeklyTotalsByReward[rewardKey]) {
+          continue;
+        }
+
+        existingWeekRecipientsByReward[rewardKey][ignKey] = true;
+
+        var rewardPages = String(pagesByReward[rewardKey] || pages || "").trim();
+        var quantity = countSlotsFromPageString(rewardPages);
+        if (!weeklyTotalsByReward[rewardKey][ignKey]) {
+          weeklyTotalsByReward[rewardKey][ignKey] = 0;
+        }
+        weeklyTotalsByReward[rewardKey][ignKey] += quantity;
       }
-      weeklyTotalsByReward[reward][ignKey] += quantity;
     }
   }
 
   for (var r = 0; r < rewardOrder.length; r++) {
     var rewardKey = rewardOrder[r];
-    var col = headers[rewardKey];
-    if (!col) {
-      continue;
-    }
-
-    var uniquePlayers = uniqueStrings(readNonEmptyColumnValues(auctionSheet, col, 2));
-    if (rewardKey === "Card Frag(Prio from Elite)") {
+    var uniquePlayers = uniqueStrings(randomizedColumns[rewardKey] || []);
+    sourcePlayersByReward[rewardKey] = uniquePlayers.slice();
+    if (rewardKey === "Card Fragment") {
       playersByReward[rewardKey] = uniquePlayers.filter(function(ign) {
         return !existingWeekRecipientsByReward[rewardKey][String(ign || "").toLowerCase()];
       });
@@ -803,8 +1128,95 @@ function getOverrunPlayerStateByReward(auctionSheet, dataSheet, weekDates) {
 
   return {
     playersByReward: playersByReward,
+    sourcePlayersByReward: sourcePlayersByReward,
     weeklyTotalsByReward: weeklyTotalsByReward,
   };
+}
+
+function getLastAwardedIgnByReward(dataSheet, weekDates) {
+  var lastAwardedByReward = {
+    "LND": "",
+    "TNS": "",
+    "Card Fragment": "",
+  };
+
+  if (!weekDates || !weekDates.tuesday || !weekDates.thursday) {
+    return lastAwardedByReward;
+  }
+
+  var lastRow = dataSheet.getLastRow();
+  if (lastRow < 2) {
+    return lastAwardedByReward;
+  }
+
+  var values = dataSheet.getRange(2, 1, lastRow - 1, 6).getValues();
+  for (var i = 0; i < values.length; i++) {
+    var ign = String(values[i][0] || "").trim();
+    var rowMeta = getAuctionDataRowMeta(values[i]);
+    if (!ign || (rowMeta.date !== weekDates.tuesday && rowMeta.date !== weekDates.thursday)) {
+      continue;
+    }
+
+    var rewardKeys = normalizeAuctionDataRewardKeys(rowMeta.reward);
+    for (var rk = 0; rk < rewardKeys.length; rk++) {
+      if (Object.prototype.hasOwnProperty.call(lastAwardedByReward, rewardKeys[rk])) {
+        lastAwardedByReward[rewardKeys[rk]] = ign;
+      }
+    }
+  }
+
+  return lastAwardedByReward;
+}
+
+function getOverrunCycleStartIndexes(overrunPlayerState, dataSheet, weekDates) {
+  var rewardOrder = ["LND", "TNS", "Card Fragment"];
+  var playersByReward = (overrunPlayerState && overrunPlayerState.playersByReward) || {};
+  var sourcePlayersByReward = (overrunPlayerState && overrunPlayerState.sourcePlayersByReward) || {};
+  var lastAwardedByReward = getLastAwardedIgnByReward(dataSheet, weekDates);
+  var startIndexes = {
+    "LND": 0,
+    "TNS": 0,
+    "Card Fragment": 0,
+  };
+
+  for (var r = 0; r < rewardOrder.length; r++) {
+    var rewardKey = rewardOrder[r];
+    var eligiblePlayers = playersByReward[rewardKey] || [];
+    var sourcePlayers = sourcePlayersByReward[rewardKey] || eligiblePlayers;
+    var lastIgn = String(lastAwardedByReward[rewardKey] || "").trim();
+
+    if (eligiblePlayers.length === 0 || sourcePlayers.length === 0 || !lastIgn) {
+      continue;
+    }
+
+    var eligibleIndexByIgn = {};
+    for (var i = 0; i < eligiblePlayers.length; i++) {
+      eligibleIndexByIgn[eligiblePlayers[i].toLowerCase()] = i;
+    }
+
+    var lastSourceIndex = -1;
+    for (var x = 0; x < sourcePlayers.length; x++) {
+      if (String(sourcePlayers[x] || "").toLowerCase() === lastIgn.toLowerCase()) {
+        lastSourceIndex = x;
+        break;
+      }
+    }
+
+    if (lastSourceIndex === -1) {
+      continue;
+    }
+
+    for (var step = 1; step <= sourcePlayers.length; step++) {
+      var nextIgn = String(sourcePlayers[(lastSourceIndex + step) % sourcePlayers.length] || "").trim();
+      var nextEligibleIndex = eligibleIndexByIgn[nextIgn.toLowerCase()];
+      if (nextIgn && nextEligibleIndex !== undefined) {
+        startIndexes[rewardKey] = nextEligibleIndex;
+        break;
+      }
+    }
+  }
+
+  return startIndexes;
 }
 
 function countSlotsFromPageString(pageString) {
@@ -855,41 +1267,84 @@ function buildBalancedQuantities(players, currentTotalsMap, totalRewards) {
   return quantities;
 }
 
-function buildOverrunDistribution(overrunPlayerState, rankRewards) {
-  var rewardOrder = ["LND", "TNS", "Card Frag(Prio from Elite)"];
+function buildCycledQuantities(players, totalRewards, startOffset) {
+  var quantities = [];
+  for (var i = 0; i < players.length; i++) {
+    quantities.push(0);
+  }
+
+  var offset = Math.max(0, Number(startOffset || 0));
+  for (var rewardUnit = 0; rewardUnit < totalRewards; rewardUnit++) {
+    var targetIndex = (offset + rewardUnit) % players.length;
+    quantities[targetIndex] += 1;
+  }
+
+  return quantities;
+}
+
+function buildSequentialQuantities(players, totalWinners, startOffset) {
+  var quantities = [];
+  for (var i = 0; i < players.length; i++) {
+    quantities.push(0);
+  }
+
+  if (players.length === 0 || totalWinners <= 0) {
+    return quantities;
+  }
+
+  var offset = Math.max(0, Number(startOffset || 0)) % players.length;
+  var winnersToAssign = Math.min(totalWinners, players.length);
+
+  for (var rewardUnit = 0; rewardUnit < winnersToAssign; rewardUnit++) {
+    var targetIndex = (offset + rewardUnit) % players.length;
+    quantities[targetIndex] = 1;
+  }
+
+  return quantities;
+}
+
+function buildOverrunDistribution(overrunPlayerState, rankRewards, winnerCountsByReward, perPlayerCounts, cycleOffsetsByReward) {
+  var rewardOrder = ["LND", "TNS", "Card Fragment"];
   var playersByReward = (overrunPlayerState && overrunPlayerState.playersByReward) || {
     "LND": [],
     "TNS": [],
-    "Card Frag(Prio from Elite)": [],
+    "Card Fragment": [],
   };
   var weeklyTotalsByReward = (overrunPlayerState && overrunPlayerState.weeklyTotalsByReward) || {
     "LND": {},
     "TNS": {},
-    "Card Frag(Prio from Elite)": {},
+    "Card Fragment": {},
+  };
+  var cycleOffsets = cycleOffsetsByReward || {
+    "LND": 0,
+    "TNS": 0,
+    "Card Fragment": 0,
   };
 
   var allocationsByReward = {
     "LND": [],
     "TNS": [],
-    "Card Frag(Prio from Elite)": [],
+    "Card Fragment": [],
   };
   var leftoverByReward = {
     "LND": 0,
     "TNS": 0,
-    "Card Frag(Prio from Elite)": 0,
+    "Card Fragment": 0,
   };
 
   for (var r = 0; r < rewardOrder.length; r++) {
     var rewardKey = rewardOrder[r];
     var players = playersByReward[rewardKey] || [];
     var totalRewards = Number(rankRewards[rewardKey] || 0);
+    var totalWinners = Number((winnerCountsByReward && winnerCountsByReward[rewardKey]) || 0);
+    var perPlayer = Math.max(1, Number((perPlayerCounts && perPlayerCounts[rewardKey]) || 1));
 
-    if (players.length === 0 || totalRewards <= 0) {
+    if (players.length === 0 || totalWinners <= 0) {
       leftoverByReward[rewardKey] = Math.max(totalRewards, 0);
       continue;
     }
 
-    var quantities = buildBalancedQuantities(players, weeklyTotalsByReward[rewardKey] || {}, totalRewards);
+    var quantities = buildSequentialQuantities(players, totalWinners, cycleOffsets[rewardKey] || 0);
 
     var allocations = [];
     for (var p = 0; p < players.length; p++) {
@@ -900,7 +1355,7 @@ function buildOverrunDistribution(overrunPlayerState, rankRewards) {
     }
 
     allocationsByReward[rewardKey] = allocations;
-    leftoverByReward[rewardKey] = 0; // No leftovers with fair division
+    leftoverByReward[rewardKey] = Math.max(totalRewards - (Math.min(totalWinners, players.length) * perPlayer), 0);
   }
 
   return {
@@ -910,62 +1365,7 @@ function buildOverrunDistribution(overrunPlayerState, rankRewards) {
 }
 
 function applyCycleBackToExistingRows(dataSheet, leftoverByReward, weekDates) {
-  var lastRow = dataSheet.getLastRow();
-  if (lastRow < 2) {
-    return 0;
-  }
-
-  var values = dataSheet.getRange(2, 1, lastRow - 1, 5).getValues();
-  var rewardOrder = ["LND", "TNS", "Card Frag(Prio from Elite)"];
-  var updatedRows = {};
-
-  for (var r = 0; r < rewardOrder.length; r++) {
-    var rewardKey = rewardOrder[r];
-    var leftovers = Number(leftoverByReward[rewardKey] || 0);
-    if (leftovers <= 0) {
-      continue;
-    }
-
-    var recipients = [];
-    for (var i = 0; i < values.length; i++) {
-      var rowReward = String(values[i][1] || "").trim();
-      var rowDate = normalizeAuctionDateValue(values[i][4]);
-      if (rowReward !== rewardKey) {
-        continue;
-      }
-      if (rowDate !== weekDates.tuesday && rowDate !== weekDates.thursday) {
-        continue;
-      }
-
-      recipients.push({
-        rowNumber: i + 2,
-        pages: String(values[i][3] || "").trim(),
-        bonusCount: 0,
-      });
-    }
-
-    if (recipients.length === 0) {
-      continue;
-    }
-
-    for (var x = 0; x < leftovers; x++) {
-      recipients[x % recipients.length].bonusCount += 1;
-    }
-
-    for (var y = 0; y < recipients.length; y++) {
-      var recipient = recipients[y];
-      if (recipient.bonusCount <= 0) {
-        continue;
-      }
-
-      var bonusText = "Sunday Cycle +" + recipient.bonusCount + "pc";
-      var nextPages = recipient.pages ? (recipient.pages + " | " + bonusText) : bonusText;
-      dataSheet.getRange(recipient.rowNumber, 4).setValue(nextPages);
-      updatedRows[recipient.rowNumber] = true;
-    }
-  }
-
-  return Object.keys(updatedRows).length;
+  return 0;
 }
 
 /**
@@ -1075,73 +1475,192 @@ function normalizeAuctionDateValue(value) {
  * @param {Object}  perPlayerCounts- { LND: n, TNS: n, "Card Frag...": n }
  * @param {Object}  weekDates      - { tuesday: "MM/dd/yyyy", thursday: "MM/dd/yyyy" }
  */
-function saveWinnersToAuctionData(dataSheet, randomized, winnerCounts, perPlayerCounts, weekDates) {
-  var rewardOrder = ["LND", "TNS", "Card Frag(Prio from Elite)"];
-  var dayDates = [weekDates.tuesday, weekDates.thursday];
-
+function saveWinnersToAuctionData(dataSheet, randomized, winnerCounts, perPlayerCounts, auctionDate, leaguePrizeConfig, selectedDay, weekDates) {
   var allRows = [];
+  var baseOffsets = getGuildLeagueCycleOffsets(dataSheet, selectedDay, weekDates, perPlayerCounts);
 
-  // Feathers = LND + TNS share a continuous slot sequence per day.
-  // Cards = own slot sequence starting from Page 1 each day.
-  var FEATHER_REWARDS = ["LND", "TNS"];
-  var CARD_REWARDS    = ["Card Frag(Prio from Elite)"];
+  var guildLeagueRows = buildGuildAuctionRowsByTab("Guild League", randomized, winnerCounts, perPlayerCounts, auctionDate, baseOffsets);
+  allRows = allRows.concat(guildLeagueRows);
 
-  for (var day = 0; day < 2; day++) {
-    var date = dayDates[day];
+  var leaguePrizeEnabled = false;
+  var leaguePrizeMultiplier = 0;
+  if (typeof leaguePrizeConfig === "boolean") {
+    leaguePrizeEnabled = leaguePrizeConfig;
+    leaguePrizeMultiplier = leaguePrizeConfig ? 1 : 0;
+  } else {
+    leaguePrizeEnabled = !!(leaguePrizeConfig && leaguePrizeConfig.enabled);
+    leaguePrizeMultiplier = Number((leaguePrizeConfig && leaguePrizeConfig.multiplier) || 0);
+  }
 
-    // --- Feathers (LND then TNS, continuous slots) ---
-    var featherSlotOffset = 0;
-    for (var r = 0; r < FEATHER_REWARDS.length; r++) {
-      var rewardKey = FEATHER_REWARDS[r];
-      var winners   = randomized[rewardKey] || [];
-      var winnerN   = winnerCounts[rewardKey]    || 0;
-      var perPlayer = perPlayerCounts[rewardKey] || 1;
-      var dayStart  = day * winnerN;
+  if (leaguePrizeEnabled && leaguePrizeMultiplier > 0) {
+    var scaledWinnerCounts = {
+      "LND": Math.ceil(Number(winnerCounts["LND"] || 0) * leaguePrizeMultiplier),
+      "TNS": Math.ceil(Number(winnerCounts["TNS"] || 0) * leaguePrizeMultiplier),
+      "Card Fragment": Math.ceil(Number(winnerCounts["Card Fragment"] || 0) * leaguePrizeMultiplier),
+    };
 
-      if (winners.length === 0 || winnerN <= 0) {
-        featherSlotOffset += winnerN * perPlayer;
-        continue;
-      }
+    var leaguePrizeOffsets = {
+      "LND": Number(baseOffsets["LND"] || 0) + Number(winnerCounts["LND"] || 0),
+      "TNS": Number(baseOffsets["TNS"] || 0) + Number(winnerCounts["TNS"] || 0),
+      "Card Fragment": Number(baseOffsets["Card Fragment"] || 0) + Number(winnerCounts["Card Fragment"] || 0),
+    };
 
-      for (var i = 0; i < winnerN; i++) {
-        var listIdx = (dayStart + i) % winners.length;
-        var ign       = winners[listIdx];
-        var startSlot = featherSlotOffset + i * perPlayer + 1;
-        var endSlot   = featherSlotOffset + (i + 1) * perPlayer;
-        allRows.push([ign, rewardKey, "Unclaimed", computePageString(startSlot, endSlot), date]);
-      }
-
-      featherSlotOffset += winnerN * perPlayer;
-    }
-
-    // --- Cards (own slot sequence, resets to 1 each day) ---
-    var cardSlotOffset = 0;
-    for (var rc = 0; rc < CARD_REWARDS.length; rc++) {
-      var rewardKey = CARD_REWARDS[rc];
-      var winners   = randomized[rewardKey] || [];
-      var winnerN   = winnerCounts[rewardKey]    || 0;
-      var perPlayer = perPlayerCounts[rewardKey] || 1;
-      var dayStart  = day * winnerN;
-
-      if (winners.length === 0 || winnerN <= 0) {
-        cardSlotOffset += winnerN * perPlayer;
-        continue;
-      }
-
-      for (var i = 0; i < winnerN; i++) {
-        var listIdx = (dayStart + i) % winners.length;
-        var ign       = winners[listIdx];
-        var startSlot = cardSlotOffset + i * perPlayer + 1;
-        var endSlot   = cardSlotOffset + (i + 1) * perPlayer;
-        allRows.push([ign, rewardKey, "Unclaimed", computePageString(startSlot, endSlot), date]);
-      }
-
-      cardSlotOffset += winnerN * perPlayer;
-    }
+    var leaguePrizeRows = buildGuildAuctionRowsByTab("League Prize", randomized, scaledWinnerCounts, perPlayerCounts, auctionDate, leaguePrizeOffsets);
+    allRows = allRows.concat(leaguePrizeRows);
   }
 
   if (allRows.length > 0) {
     var startRow = dataSheet.getLastRow() + 1;
-    dataSheet.getRange(startRow, 1, allRows.length, 5).setValues(allRows);
+    dataSheet.getRange(startRow, 1, allRows.length, 6).setValues(allRows);
   }
+}
+
+function getGuildLeagueCycleOffsets(dataSheet, selectedDay, weekDates, perPlayerCounts) {
+  var offsets = {
+    "LND": 0,
+    "TNS": 0,
+    "Card Fragment": 0,
+  };
+  var perPlayer = {
+    "LND": Math.max(1, Number((perPlayerCounts && perPlayerCounts["LND"]) || PER_PLAYER_DEFAULTS_GS["LND"] || 1)),
+    "TNS": Math.max(1, Number((perPlayerCounts && perPlayerCounts["TNS"]) || PER_PLAYER_DEFAULTS_GS["TNS"] || 1)),
+    "Card Fragment": Math.max(1, Number((perPlayerCounts && perPlayerCounts["Card Fragment"]) || PER_PLAYER_DEFAULTS_GS["Card Fragment"] || 1)),
+  };
+
+  if (String(selectedDay || "").toLowerCase() !== "thursday") {
+    return offsets;
+  }
+
+  if (!weekDates || !weekDates.tuesday || !weekDates.thursday) {
+    return offsets;
+  }
+
+  var lastRow = dataSheet.getLastRow();
+  if (lastRow < 2) {
+    return offsets;
+  }
+
+  var values = dataSheet.getRange(2, 1, lastRow - 1, 6).getValues();
+  for (var i = 0; i < values.length; i++) {
+    var rowMeta = getAuctionDataRowMeta(values[i]);
+    var rowDate = rowMeta.date;
+    if (rowDate !== weekDates.tuesday && rowDate !== weekDates.thursday) {
+      continue;
+    }
+
+    var pagesByReward = getAuctionDataPagesByReward(rowMeta.reward, rowMeta.pages);
+    if (pagesByReward["LND"]) {
+      offsets["LND"] += Math.ceil(countSlotsFromPageString(pagesByReward["LND"]) / perPlayer["LND"]);
+    }
+    if (pagesByReward["TNS"]) {
+      offsets["TNS"] += Math.ceil(countSlotsFromPageString(pagesByReward["TNS"]) / perPlayer["TNS"]);
+    }
+    if (pagesByReward["Card Fragment"]) {
+      offsets["Card Fragment"] += Math.ceil(countSlotsFromPageString(pagesByReward["Card Fragment"]) / perPlayer["Card Fragment"]);
+    }
+  }
+
+  return offsets;
+}
+
+function buildGuildAuctionRowsByTab(tabName, randomized, winnerCounts, perPlayerCounts, auctionDate, winnerOffsets) {
+  var rows = [];
+  var featherPartsByIgn = {};
+  var featherOrder = [];
+  var featherRewards = ["LND", "TNS"];
+  var featherSlotOffset = 0;
+  var offsets = winnerOffsets || {};
+
+  for (var r = 0; r < featherRewards.length; r++) {
+    var featherRewardKey = featherRewards[r];
+    var featherWinners = randomized[featherRewardKey] || [];
+    var featherWinnerN = Number(winnerCounts[featherRewardKey] || 0);
+    var featherPerPlayer = Number(perPlayerCounts[featherRewardKey] || 1);
+
+    if (featherWinners.length === 0 || featherWinnerN <= 0) {
+      featherSlotOffset += featherWinnerN * featherPerPlayer;
+      continue;
+    }
+
+    for (var i = 0; i < featherWinnerN; i++) {
+      var listIdx = (Number(offsets[featherRewardKey] || 0) + i) % featherWinners.length;
+      var ign = String(featherWinners[listIdx] || "").trim();
+      if (!ign) {
+        continue;
+      }
+
+      var startSlot = featherSlotOffset + i * featherPerPlayer + 1;
+      var endSlot = featherSlotOffset + (i + 1) * featherPerPlayer;
+      var pageLabel = computePageString(startSlot, endSlot);
+
+      var ignKey = ign.toLowerCase();
+      if (!featherPartsByIgn[ignKey]) {
+        featherPartsByIgn[ignKey] = {
+          ign: ign,
+          lnd: [],
+          tns: [],
+        };
+        featherOrder.push(ignKey);
+      }
+
+      if (featherRewardKey === "LND") {
+        featherPartsByIgn[ignKey].lnd.push(pageLabel);
+      } else {
+        featherPartsByIgn[ignKey].tns.push(pageLabel);
+      }
+    }
+
+    featherSlotOffset += featherWinnerN * featherPerPlayer;
+  }
+
+  for (var f = 0; f < featherOrder.length; f++) {
+    var featherEntry = featherPartsByIgn[featherOrder[f]];
+    var featherParts = [];
+    if (featherEntry.lnd.length > 0) {
+      featherParts.push("LND: " + featherEntry.lnd.join(", "));
+    }
+    if (featherEntry.tns.length > 0) {
+      featherParts.push("TNS: " + featherEntry.tns.join(", "));
+    }
+    if (featherParts.length === 0) {
+      continue;
+    }
+
+    rows.push([
+      featherEntry.ign,
+      "Feather",
+      tabName,
+      "Unclaim",
+      featherParts.join(" | "),
+      auctionDate,
+    ]);
+  }
+
+  var cardWinners = randomized["Card Fragment"] || [];
+  var cardWinnerN = Number(winnerCounts["Card Fragment"] || 0);
+  var cardPerPlayer = Number(perPlayerCounts["Card Fragment"] || 1);
+  var cardSlotOffset = 0;
+
+  if (cardWinners.length > 0 && cardWinnerN > 0) {
+    for (var c = 0; c < cardWinnerN; c++) {
+      var cardListIdx = (Number(offsets["Card Fragment"] || 0) + c) % cardWinners.length;
+      var cardIgn = String(cardWinners[cardListIdx] || "").trim();
+      if (!cardIgn) {
+        continue;
+      }
+
+      var cardStartSlot = cardSlotOffset + c * cardPerPlayer + 1;
+      var cardEndSlot = cardSlotOffset + (c + 1) * cardPerPlayer;
+      rows.push([
+        cardIgn,
+        "Card",
+        tabName,
+        "Unclaim",
+        computePageString(cardStartSlot, cardEndSlot),
+        auctionDate,
+      ]);
+    }
+  }
+
+  return rows;
 }

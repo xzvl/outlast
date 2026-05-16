@@ -12,28 +12,33 @@ const MEMBERS_SHEET_NAME = "ROOC Members Data";
 const MEMBERS_DATA_GID = "114714217";
 const TRIGGER_SHEET_GID = "1887602829";
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-PTg00o4UDk0QrDDvkSiqCo2hi0xmfz0LYkkp53JRXqPMnC0SU0sgZdWfUuATgJYs1g/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzM_TNgbXoPMK8Qkqf0vptN6Wb-42-aokvCuqcLGwIjWEAm0Zjmp_BryCId9AixEFZhMQ/exec";
 
 const REWARD_OPTIONS = [
   { label: "Light and Dark", value: "LND" },
   { label: "Time and Space", value: "TNS" },
-  { label: "Card Fragment", value: "Card Frag(Prio from Elite)" },
+  { label: "Card Fragment", value: "Card Fragment" },
+];
+
+const INSERT_REWARD_OPTIONS = [
+  { label: "Feather", value: "Feather", badge: "LND and TNS" },
+  { label: "Card Fragment", value: "Card Fragment", badge: "Card Fragment" },
 ];
 
 const PER_PLAYER_DEFAULTS = {
-  LND: 6,
-  TNS: 10,
-  "Card Frag(Prio from Elite)": 1,
+  LND: 3,
+  TNS: 5,
+  "Card Fragment": 1,
 };
 
 const GL_TIER_OPTIONS = [
-  { label: "Bronze",        value: "Bronze",        totals: { LND: 30,  TNS: 50,  "Card Frag(Prio from Elite)": 2 } },
-  { label: "Silver",        value: "Silver",        totals: { LND: 35,  TNS: 60,  "Card Frag(Prio from Elite)": 2 } },
-  { label: "Gold",          value: "Gold",          totals: { LND: 40,  TNS: 70,  "Card Frag(Prio from Elite)": 2 } },
-  { label: "Platinum",      value: "Platinum",      totals: { LND: 45,  TNS: 80,  "Card Frag(Prio from Elite)": 2 } },
-  { label: "Shinning Stars",value: "Shinning Stars",totals: { LND: 47,  TNS: 85,  "Card Frag(Prio from Elite)": 2 } },
-  { label: "Glorious Moon", value: "Glorious Moon", totals: { LND: 50,  TNS: 90,  "Card Frag(Prio from Elite)": 2 } },
-  { label: "Bright Sun",    value: "Bright Sun",    totals: { LND: 55,  TNS: 100, "Card Frag(Prio from Elite)": 2 } },
+  { label: "Bronze",        value: "Bronze",        totals: { LND: 30,  TNS: 50,  "Card Fragment": 2 } },
+  { label: "Silver",        value: "Silver",        totals: { LND: 35,  TNS: 60,  "Card Fragment": 2 } },
+  { label: "Gold",          value: "Gold",          totals: { LND: 40,  TNS: 70,  "Card Fragment": 2 } },
+  { label: "Platinum",      value: "Platinum",      totals: { LND: 45,  TNS: 80,  "Card Fragment": 2 } },
+  { label: "Shinning Stars",value: "Shinning Stars",totals: { LND: 47,  TNS: 85,  "Card Fragment": 2 } },
+  { label: "Glorious Moon", value: "Glorious Moon", totals: { LND: 50,  TNS: 90,  "Card Fragment": 2 } },
+  { label: "Bright Sun",    value: "Bright Sun",    totals: { LND: 55,  TNS: 100, "Card Fragment": 2 } },
 ];
 
 const ADVANCED_OVERRUN_RANK_OPTIONS = [
@@ -65,24 +70,24 @@ const OVERRUN_GROUP_OPTIONS = [
 
 const OVERRUN_GROUP_RANK_REWARDS = {
   advanced: {
-    "1": { LND: 150, TNS: 170, "Card Frag(Prio from Elite)": 20 },
-    "2": { LND: 140, TNS: 160, "Card Frag(Prio from Elite)": 20 },
-    "3": { LND: 140, TNS: 160, "Card Frag(Prio from Elite)": 20 },
-    "4": { LND: 120, TNS: 150, "Card Frag(Prio from Elite)": 15 },
-    "5": { LND: 120, TNS: 150, "Card Frag(Prio from Elite)": 15 },
-    "6": { LND: 120, TNS: 150, "Card Frag(Prio from Elite)": 15 },
-    "7": { LND: 100, TNS: 150, "Card Frag(Prio from Elite)": 12 },
-    "8": { LND: 100, TNS: 150, "Card Frag(Prio from Elite)": 12 },
+    "1": { LND: 150, TNS: 170, "Card Fragment": 20 },
+    "2": { LND: 140, TNS: 160, "Card Fragment": 20 },
+    "3": { LND: 140, TNS: 160, "Card Fragment": 20 },
+    "4": { LND: 120, TNS: 150, "Card Fragment": 15 },
+    "5": { LND: 120, TNS: 150, "Card Fragment": 15 },
+    "6": { LND: 120, TNS: 150, "Card Fragment": 15 },
+    "7": { LND: 100, TNS: 150, "Card Fragment": 12 },
+    "8": { LND: 100, TNS: 150, "Card Fragment": 12 },
   },
   beginner: {
-    "1": { LND: 80, TNS: 140, "Card Frag(Prio from Elite)": 10 },
-    "2": { LND: 75, TNS: 130, "Card Frag(Prio from Elite)": 9 },
-    "3": { LND: 70, TNS: 120, "Card Frag(Prio from Elite)": 8 },
-    "4": { LND: 65, TNS: 110, "Card Frag(Prio from Elite)": 5 },
-    "5": { LND: 60, TNS: 100, "Card Frag(Prio from Elite)": 5 },
-    "6": { LND: 50, TNS: 80, "Card Frag(Prio from Elite)": 5 },
-    "7": { LND: 30, TNS: 30, "Card Frag(Prio from Elite)": 2 },
-    "8+": { LND: 20, TNS: 20, "Card Frag(Prio from Elite)": 1 },
+    "1": { LND: 80, TNS: 140, "Card Fragment": 10 },
+    "2": { LND: 75, TNS: 130, "Card Fragment": 9 },
+    "3": { LND: 70, TNS: 120, "Card Fragment": 8 },
+    "4": { LND: 65, TNS: 110, "Card Fragment": 5 },
+    "5": { LND: 60, TNS: 100, "Card Fragment": 5 },
+    "6": { LND: 50, TNS: 80, "Card Fragment": 5 },
+    "7": { LND: 30, TNS: 30, "Card Fragment": 2 },
+    "8+": { LND: 20, TNS: 20, "Card Fragment": 1 },
   },
 };
 
@@ -90,7 +95,7 @@ function createEmptyRewardColumns() {
   return {
     LND: [],
     TNS: [],
-    "Card Frag(Prio from Elite)": [],
+    "Card Fragment": [],
   };
 }
 
@@ -98,8 +103,56 @@ function createDefaultRewardFields() {
   return {
     LND: { perPlayer: String(PER_PLAYER_DEFAULTS.LND), total: "0", winnerPerGL: "0" },
     TNS: { perPlayer: String(PER_PLAYER_DEFAULTS.TNS), total: "0", winnerPerGL: "0" },
-    "Card Frag(Prio from Elite)": { perPlayer: String(PER_PLAYER_DEFAULTS["Card Frag(Prio from Elite)"]), total: "0", winnerPerGL: "0" },
+    "Card Fragment": { perPlayer: String(PER_PLAYER_DEFAULTS["Card Fragment"]), total: "0", winnerPerGL: "0" },
   };
+}
+
+function createDefaultOverrunRewardFields() {
+  return {
+    LND: { perPlayer: String(PER_PLAYER_DEFAULTS.LND) },
+    TNS: { perPlayer: String(PER_PLAYER_DEFAULTS.TNS) },
+    "Card Fragment": { perPlayer: String(PER_PLAYER_DEFAULTS["Card Fragment"]) },
+  };
+}
+
+function computeGreatestCommonDivisor(leftValue, rightValue) {
+  let a = Math.abs(parseNonNegativeInteger(leftValue));
+  let b = Math.abs(parseNonNegativeInteger(rightValue));
+
+  while (b !== 0) {
+    const next = a % b;
+    a = b;
+    b = next;
+  }
+
+  return a;
+}
+
+function getBestOverrunFeatherPlayerCount(totalLnd, totalTns) {
+  const lnd = parseNonNegativeInteger(totalLnd);
+  const tns = parseNonNegativeInteger(totalTns);
+  if (lnd <= 0 || tns <= 0) {
+    return 0;
+  }
+
+  const gcd = computeGreatestCommonDivisor(lnd, tns);
+  if (gcd <= 0) {
+    return 0;
+  }
+
+  // Keep Overrun winners manageable while preserving exact integer limits.
+  let best = 0;
+  for (let count = 1; count <= gcd; count += 1) {
+    if (gcd % count !== 0) {
+      continue;
+    }
+
+    if (count <= 10) {
+      best = count;
+    }
+  }
+
+  return best > 0 ? best : gcd;
 }
 
 const OFFICER_ROLE_KEYWORDS = ["officer", "guild leader", "vice guild leader"];
@@ -182,11 +235,147 @@ function normalizeRewardKey(value) {
     return "TNS";
   }
 
-  if (normalized.includes("cardfrag") || normalized.includes("cardfragment")) {
-    return "Card Frag(Prio from Elite)";
+  if (normalized === "card" || normalized.includes("cardfrag") || normalized.includes("cardfragment")) {
+    return "Card Fragment";
   }
 
   return "";
+}
+
+function expandAuctionDataRewardKeys(reward) {
+  const normalized = String(reward || "").toLowerCase().replace(/\s+/g, "");
+
+  if (!normalized) {
+    return [];
+  }
+
+  if (normalized === "feather") {
+    return ["LND", "TNS"];
+  }
+
+  const key = normalizeRewardKey(reward);
+  return key ? [key] : [];
+}
+
+function splitAuctionDataPages(reward, pages) {
+  const pageText = String(pages || "").trim();
+  if (!pageText) {
+    return {};
+  }
+
+  if (String(reward || "").trim().toLowerCase() !== "feather") {
+    const rewardKey = normalizeRewardKey(reward) || String(reward || "").trim();
+    return rewardKey ? { [rewardKey]: pageText } : {};
+  }
+
+  const segments = pageText.split("|").map((segment) => segment.trim()).filter(Boolean);
+  const pagesByReward = {};
+
+  for (const segment of segments) {
+    const separatorIndex = segment.indexOf(":");
+    if (separatorIndex < 0) {
+      continue;
+    }
+
+    const rewardName = segment.slice(0, separatorIndex).trim();
+    const pageValue = segment.slice(separatorIndex + 1).trim();
+    const rewardKey = normalizeRewardKey(rewardName);
+    if (rewardKey && pageValue) {
+      pagesByReward[rewardKey] = pageValue;
+    }
+  }
+
+  return pagesByReward;
+}
+
+function createEmptyAuctionTabs() {
+  return {
+    "Emperium Overrun": createEmptyRewardColumns(),
+    "Guild League": createEmptyRewardColumns(),
+    "League Prize": createEmptyRewardColumns(),
+  };
+}
+
+function normalizeAuctionTab(value) {
+  const normalized = String(value || "").toLowerCase().replace(/\s+/g, "");
+  if (normalized.includes("leagueprize")) {
+    return "League Prize";
+  }
+
+  if (normalized.includes("overrun")) {
+    return "Emperium Overrun";
+  }
+
+  return "Guild League";
+}
+
+function combineFeatherEntries(lndEntries, tnsEntries) {
+  const orderedKeys = [];
+  const byIgn = new Map();
+
+  function ensureEntry(entry) {
+    const ign = String(entry?.ign || "").trim();
+    if (!ign) {
+      return null;
+    }
+
+    const key = ign.toLowerCase();
+    if (!byIgn.has(key)) {
+      byIgn.set(key, {
+        ign,
+        lndPages: "",
+        tnsPages: "",
+        lndStatus: "",
+        tnsStatus: "",
+      });
+      orderedKeys.push(key);
+    }
+
+    return byIgn.get(key);
+  }
+
+  function extractPages(rawPages, rewardType) {
+    const pageStr = String(rawPages || "").trim();
+    if (!pageStr) return "";
+    
+    // Check if the value contains the requested reward type
+    // Handle both single values ("LND: Page 33") and pipe-separated ("LND: Page 1 | TNS: Page 2")
+    const parts = pageStr.split("|").map((p) => p.trim());
+    for (const part of parts) {
+      if (part.match(new RegExp(`^${rewardType}:\\s*`, "i"))) {
+        // Found the correct reward type, extract the page part
+        return part.replace(new RegExp(`^${rewardType}:\\s*`, "i"), "");
+      }
+    }
+    
+    // If we found the reward type elsewhere (wrong type), return empty
+    if (pageStr.match(/^(LND|TNS):/i)) {
+      return "";
+    }
+    
+    // Otherwise return the original (shouldn't happen with correct data)
+    return pageStr;
+  }
+
+  for (const entry of lndEntries || []) {
+    const mergedEntry = ensureEntry(entry);
+    if (!mergedEntry) {
+      continue;
+    }
+    mergedEntry.lndPages = extractPages(entry.pages, "LND");
+    mergedEntry.lndStatus = String(entry.status || "").trim();
+  }
+
+  for (const entry of tnsEntries || []) {
+    const mergedEntry = ensureEntry(entry);
+    if (!mergedEntry) {
+      continue;
+    }
+    mergedEntry.tnsPages = extractPages(entry.pages, "TNS");
+    mergedEntry.tnsStatus = String(entry.status || "").trim();
+  }
+
+  return orderedKeys.map((key) => byIgn.get(key));
 }
 
 function compareValues(left, right) {
@@ -209,6 +398,33 @@ function getDayLabelFromDateString(dateString) {
   }
 
   return parsed.toLocaleDateString(undefined, { weekday: "long" });
+}
+
+function isThursdayFromDateString(dateString) {
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) {
+    return false;
+  }
+
+  return parsed.getDay() === 4;
+}
+
+function isTuesdayFromDateString(dateString) {
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) {
+    return false;
+  }
+
+  return parsed.getDay() === 2;
+}
+
+function isSundayFromDateString(dateString) {
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) {
+    return false;
+  }
+
+  return parsed.getDay() === 0;
 }
 
 function extractTableData(table) {
@@ -385,8 +601,11 @@ export default function HomePage() {
   const [officerOptions, setOfficerOptions] = useState([]);
   const [selectedOfficerIGN, setSelectedOfficerIGN] = useState("");
   const [randomizerGameId, setRandomizerGameId] = useState("");
+  const [selectedGLDay, setSelectedGLDay] = useState("tuesday");
   const [selectedGLTier, setSelectedGLTier] = useState("");
   const [timerInput, setTimerInput] = useState("00:00:05");
+  const [guildLeagueResult, setGuildLeagueResult] = useState("");
+  const [pointDifference, setPointDifference] = useState("3000");
   const [isRandomizing, setIsRandomizing] = useState(false);
   const [randomizerResult, setRandomizerResult] = useState(null);
   const [randomizedColumns, setRandomizedColumns] = useState(createEmptyRewardColumns);
@@ -398,6 +617,7 @@ export default function HomePage() {
   const [overrunGameId, setOverrunGameId] = useState("");
   const [selectedOverrunGroup, setSelectedOverrunGroup] = useState("");
   const [selectedOverrunRank, setSelectedOverrunRank] = useState("");
+  const [overrunRewardFields, setOverrunRewardFields] = useState(createDefaultOverrunRewardFields);
   const [officerCardBenefitEnabled, setOfficerCardBenefitEnabled] = useState(false);
   const [selectedOfficerCardRecipients, setSelectedOfficerCardRecipients] = useState([]);
   const [isGeneratingOverrun, setIsGeneratingOverrun] = useState(false);
@@ -575,6 +795,7 @@ export default function HomePage() {
             String(row[2] || "").trim(),
             String(row[3] || "").trim(),
             String(row[4] || "").trim(),
+            String(row[5] || "").trim(),
           ])
           .filter((row) => row.some(Boolean));
 
@@ -702,10 +923,10 @@ export default function HomePage() {
         total: String(tier.totals.TNS),
         winnerPerGL: String(Math.floor(tier.totals.TNS / PER_PLAYER_DEFAULTS.TNS)),
       },
-      "Card Frag(Prio from Elite)": {
-        perPlayer: String(PER_PLAYER_DEFAULTS["Card Frag(Prio from Elite)"]),
-        total: String(tier.totals["Card Frag(Prio from Elite)"]),
-        winnerPerGL: String(Math.floor(tier.totals["Card Frag(Prio from Elite)"] / PER_PLAYER_DEFAULTS["Card Frag(Prio from Elite)"])),
+      "Card Fragment": {
+        perPlayer: String(PER_PLAYER_DEFAULTS["Card Fragment"]),
+        total: String(tier.totals["Card Fragment"]),
+        winnerPerGL: String(Math.floor(tier.totals["Card Fragment"] / PER_PLAYER_DEFAULTS["Card Fragment"])),
       },
     });
   }, []);
@@ -714,8 +935,11 @@ export default function HomePage() {
     setShowRandomizerModal(true);
     setSelectedOfficerIGN("");
     setRandomizerGameId("");
+    setSelectedGLDay("tuesday");
     setSelectedGLTier("");
     setTimerInput("00:00:05");
+    setGuildLeagueResult("");
+    setPointDifference("3000");
     setRandomizerResult(null);
     setRandomizedColumns(createEmptyRewardColumns());
     setDisplayedColumns(createEmptyRewardColumns());
@@ -753,7 +977,7 @@ export default function HomePage() {
     setDisplayedColumns({
       LND: shuffleNames(finalColumns.LND || []),
       TNS: shuffleNames(finalColumns.TNS || []),
-      "Card Frag(Prio from Elite)": shuffleNames(finalColumns["Card Frag(Prio from Elite)"] || []),
+      "Card Fragment": shuffleNames(finalColumns["Card Fragment"] || []),
     });
 
     if (durationMs <= stepMs) {
@@ -765,7 +989,7 @@ export default function HomePage() {
       setDisplayedColumns({
         LND: shuffleNames(finalColumns.LND || []),
         TNS: shuffleNames(finalColumns.TNS || []),
-        "Card Frag(Prio from Elite)": shuffleNames(finalColumns["Card Frag(Prio from Elite)"] || []),
+          "Card Fragment": shuffleNames(finalColumns["Card Fragment"] || []),
       });
     }, stepMs);
 
@@ -775,7 +999,7 @@ export default function HomePage() {
     }, durationMs);
   }, [shuffleNames, stopShuffleAnimation]);
 
-  const handleWinnerPerGLChange = useCallback((rewardKey, nextValue) => {
+  const handlePurchaseLimitChange = useCallback((rewardKey, nextValue) => {
     if (!/^\d*$/.test(nextValue)) {
       return;
     }
@@ -784,7 +1008,24 @@ export default function HomePage() {
       ...current,
       [rewardKey]: {
         ...(current[rewardKey] || { perPlayer: "1", total: "0", winnerPerGL: "0" }),
-        winnerPerGL: nextValue,
+        perPlayer: nextValue,
+        winnerPerGL: parseNonNegativeInteger(nextValue) > 0
+          ? String(Math.floor(parseNonNegativeInteger((current[rewardKey] || {}).total) / parseNonNegativeInteger(nextValue)))
+          : "0",
+      },
+    }));
+  }, []);
+
+  const handleOverrunPurchaseLimitChange = useCallback((rewardKey, nextValue) => {
+    if (!/^\d*$/.test(nextValue)) {
+      return;
+    }
+
+    setOverrunRewardFields((current) => ({
+      ...current,
+      [rewardKey]: {
+        ...(current[rewardKey] || { perPlayer: "1" }),
+        perPlayer: nextValue,
       },
     }));
   }, []);
@@ -813,6 +1054,121 @@ export default function HomePage() {
     return total > 0 ? total : 1;
   }, [timerInput]);
 
+  const parsedPointDifference = useMemo(() => {
+    if (guildLeagueResult !== "lost") {
+      return 0;
+    }
+
+    return parseNonNegativeInteger(pointDifference);
+  }, [guildLeagueResult, pointDifference]);
+
+  const shouldShowLeaguePrizeTab = useMemo(
+    () => guildLeagueResult === "won" || (guildLeagueResult === "lost" && parsedPointDifference < 1500),
+    [guildLeagueResult, parsedPointDifference]
+  );
+
+  const leaguePrizeMultiplier = useMemo(() => {
+    if (guildLeagueResult === "won") {
+      return 1;
+    }
+
+    if (guildLeagueResult === "lost") {
+      if (parsedPointDifference < 500) {
+        return 0.7;
+      }
+
+      if (parsedPointDifference < 1500) {
+        return 0.5;
+      }
+    }
+
+    return 0;
+  }, [guildLeagueResult, parsedPointDifference]);
+
+  const shouldShowPreviewAnimation = selectedGLDay !== "thursday";
+
+  const getCircularRewardNames = useCallback((rewardKey, count, offset = 0, sourceColumns = displayedColumns) => {
+    const names = sourceColumns[rewardKey] || [];
+    if (names.length === 0 || count <= 0) {
+      return [];
+    }
+
+    const result = [];
+    for (let index = 0; index < count; index += 1) {
+      result.push(names[(offset + index) % names.length]);
+    }
+
+    return result;
+  }, [displayedColumns]);
+
+  const getCircularFeatherNames = useCallback((count, offset = 0, sourceColumns = displayedColumns) => {
+    const names = (sourceColumns.LND && sourceColumns.LND.length > 0)
+      ? sourceColumns.LND
+      : (sourceColumns.TNS || []);
+    if (names.length === 0 || count <= 0) {
+      return [];
+    }
+
+    const result = [];
+    for (let index = 0; index < count; index += 1) {
+      result.push(names[(offset + index) % names.length]);
+    }
+
+    return result;
+  }, [displayedColumns]);
+
+  const guildLeaguePreview = useMemo(() => ({
+    LND: getCircularRewardNames("LND", getWinnerCount("LND")),
+    TNS: getCircularRewardNames("TNS", getWinnerCount("TNS")),
+    "Card Fragment": getCircularRewardNames("Card Fragment", getWinnerCount("Card Fragment")),
+  }), [getCircularRewardNames, getWinnerCount]);
+
+  const leaguePrizePreview = useMemo(() => ({
+    LND: getCircularRewardNames("LND", Math.ceil(getWinnerCount("LND") * leaguePrizeMultiplier), getWinnerCount("LND")),
+    TNS: getCircularRewardNames("TNS", Math.ceil(getWinnerCount("TNS") * leaguePrizeMultiplier), getWinnerCount("TNS")),
+    "Card Fragment": getCircularRewardNames("Card Fragment", Math.ceil(getWinnerCount("Card Fragment") * leaguePrizeMultiplier), getWinnerCount("Card Fragment")),
+  }), [getCircularRewardNames, getWinnerCount, leaguePrizeMultiplier]);
+
+  const featherGuildLeagueWinnerCount = useMemo(
+    () => Math.max(getWinnerCount("LND"), getWinnerCount("TNS")),
+    [getWinnerCount]
+  );
+
+  const featherLeaguePrizeWinnerCount = useMemo(() => {
+    if (!shouldShowLeaguePrizeTab) {
+      return 0;
+    }
+    return Math.max(
+      Math.ceil(getWinnerCount("LND") * leaguePrizeMultiplier),
+      Math.ceil(getWinnerCount("TNS") * leaguePrizeMultiplier)
+    );
+  }, [getWinnerCount, leaguePrizeMultiplier, shouldShowLeaguePrizeTab]);
+
+  const featherGuildLeaguePreview = useMemo(
+    () => getCircularFeatherNames(featherGuildLeagueWinnerCount, 0),
+    [featherGuildLeagueWinnerCount, getCircularFeatherNames]
+  );
+
+  const featherLeaguePrizePreview = useMemo(
+    () => getCircularFeatherNames(featherLeaguePrizeWinnerCount, featherGuildLeagueWinnerCount),
+    [featherGuildLeagueWinnerCount, featherLeaguePrizeWinnerCount, getCircularFeatherNames]
+  );
+
+  const displayedWinnerCounts = useMemo(() => {
+    const baseLND = getWinnerCount("LND");
+    const baseTNS = getWinnerCount("TNS");
+    const baseCard = getWinnerCount("Card Fragment");
+    const bonusLND = shouldShowLeaguePrizeTab ? Math.ceil(baseLND * leaguePrizeMultiplier) : 0;
+    const bonusTNS = shouldShowLeaguePrizeTab ? Math.ceil(baseTNS * leaguePrizeMultiplier) : 0;
+    const bonusCard = shouldShowLeaguePrizeTab ? Math.ceil(baseCard * leaguePrizeMultiplier) : 0;
+
+    return {
+      LND: baseLND + bonusLND,
+      TNS: baseTNS + bonusTNS,
+      "Card Fragment": baseCard + bonusCard,
+    };
+  }, [getWinnerCount, leaguePrizeMultiplier, shouldShowLeaguePrizeTab]);
+
   const handleRandomize = useCallback(() => {
     if (!selectedOfficerIGN || !randomizerGameId || isRandomizing) {
       return;
@@ -831,13 +1187,18 @@ export default function HomePage() {
       action: "randomize",
       triggerIgn: selectedOfficerIGN,
       gameId: randomizerGameId,
+      day: selectedGLDay,
+      guildLeagueResult,
+      pointDifference: guildLeagueResult === "lost" ? String(parsedPointDifference) : "",
+      includeLeaguePrizeTab: shouldShowLeaguePrizeTab ? "true" : "false",
       timerSeconds: String(parsedAnimationSeconds),
       winnerPerGLLND:  String(parseNonNegativeInteger((rewardFields["LND"]                        || {}).winnerPerGL)),
       winnerPerGLTNS:  String(parseNonNegativeInteger((rewardFields["TNS"]                        || {}).winnerPerGL)),
-      winnerPerGLCard: String(parseNonNegativeInteger((rewardFields["Card Frag(Prio from Elite)"] || {}).winnerPerGL)),
+      winnerPerGLCard: String(parseNonNegativeInteger((rewardFields["Card Fragment"] || {}).winnerPerGL)),
       perPlayerLND:    String(PER_PLAYER_DEFAULTS.LND),
       perPlayerTNS:    String(PER_PLAYER_DEFAULTS.TNS),
-      perPlayerCard:   String(PER_PLAYER_DEFAULTS["Card Frag(Prio from Elite)"]),
+      perPlayerCard:   String(PER_PLAYER_DEFAULTS["Card Fragment"]),
+      guildLeagueWinner: shouldShowLeaguePrizeTab ? "true" : "false",
     });
 
     fetch(`${APPS_SCRIPT_URL}?${params.toString()}`, { redirect: "follow" })
@@ -858,11 +1219,15 @@ export default function HomePage() {
         const finalColumns = {
           LND: data.randomized?.LND || [],
           TNS: data.randomized?.TNS || [],
-          "Card Frag(Prio from Elite)": data.randomized?.["Card Frag(Prio from Elite)"] || [],
+          "Card Fragment": data.randomized?.["Card Fragment"] || [],
         };
 
         setRandomizedColumns(finalColumns);
-        runShuffleAnimation(finalColumns, parsedAnimationSeconds);
+        if (selectedGLDay === "tuesday") {
+          runShuffleAnimation(finalColumns, parsedAnimationSeconds);
+        } else {
+          setDisplayedColumns(finalColumns);
+        }
 
         setRandomizerResult({
           type: "success",
@@ -874,7 +1239,21 @@ export default function HomePage() {
         setIsRandomizing(false);
         setRandomizerResult({ type: "error", message: `Request failed: ${error.message}` });
       });
-  }, [isRandomizing, loadSheet, parsedAnimationSeconds, randomizerGameId, rewardFields, runShuffleAnimation, selectedOfficerIGN, stopShuffleAnimation]);
+  }, [
+    guildLeagueResult,
+    loadSheet,
+    parsedAnimationSeconds,
+    parsedPointDifference,
+    pointDifference,
+    randomizerGameId,
+    rewardFields,
+    runShuffleAnimation,
+    selectedGLDay,
+    selectedOfficerIGN,
+    isRandomizing,
+    shouldShowLeaguePrizeTab,
+    stopShuffleAnimation,
+  ]);
 
   const handleOpenClearModal = useCallback(() => {
     setShowClearModal(true);
@@ -899,6 +1278,7 @@ export default function HomePage() {
     setOverrunGameId("");
     setSelectedOverrunGroup("");
     setSelectedOverrunRank("");
+    setOverrunRewardFields(createDefaultOverrunRewardFields());
     setOfficerCardBenefitEnabled(false);
     setSelectedOfficerCardRecipients([]);
     setOverrunResult(null);
@@ -1027,9 +1407,14 @@ export default function HomePage() {
     }, 1300);
   }, []);
 
-  const handleCopyRewardData = useCallback(async (dayData) => {
-    const buildLines = (title, entries) => {
+  const handleCopyRewardData = useCallback(async (dayTabs, date) => {
+    const buildSectionLines = (title, entries) => {
       const output = [title];
+      if (!entries || entries.length === 0) {
+        output.push("-");
+        return output;
+      }
+
       for (let i = 0; i < entries.length; i += 1) {
         const entry = entries[i] || {};
         output.push(`@${entry.ign || "-"} = ${entry.pages || "-"}`);
@@ -1037,17 +1422,34 @@ export default function HomePage() {
       return output;
     };
 
-    const lndEntries = dayData?.LND || [];
-    const tnsEntries = dayData?.TNS || [];
-    const cardEntries = dayData?.["Card Frag(Prio from Elite)"] || [];
+    const buildTabLines = (tabTitle, tabData) => {
+      const cardEntries = tabData?.["Card Fragment"] || [];
+      const lndEntries = tabData?.LND || [];
+      const tnsEntries = tabData?.TNS || [];
 
-    const sections = [
-      ...buildLines("FOR LND", lndEntries),
-      "",
-      ...buildLines("FOR TNS", tnsEntries),
-      "",
-      ...buildLines("FOR CARDS", cardEntries),
-    ];
+      return [
+        tabTitle,
+        ...buildSectionLines("FOR CARDS", cardEntries),
+        "",
+        ...buildSectionLines("FOR LND", lndEntries),
+        "",
+        ...buildSectionLines("FOR TNS", tnsEntries),
+      ];
+    };
+
+    let sections;
+    if (isSundayFromDateString(date)) {
+      const overrunData = dayTabs?.["Emperium Overrun"] || createEmptyRewardColumns();
+      sections = [...buildTabLines("Emperium Overrun Tab", overrunData)];
+    } else {
+      const guildLeagueData = dayTabs?.["Guild League"] || createEmptyRewardColumns();
+      const leaguePrizeData = dayTabs?.["League Prize"] || createEmptyRewardColumns();
+      sections = [
+        ...buildTabLines("Guild League Tab", guildLeagueData),
+        "",
+        ...buildTabLines("League Prize Tab", leaguePrizeData),
+      ];
+    }
     const text = sections.join("\n");
 
     try {
@@ -1078,17 +1480,32 @@ export default function HomePage() {
       const row = auctionDataRows[i] || [];
       const ign = String(row[0] || "").trim();
       const reward = String(row[1] || "").trim();
-      const status = String(row[2] || "").trim();
-      const pages = String(row[3] || "").trim();
-      const date = String(row[4] || "").trim();
+      const hasTabShape = String(row[5] || "").trim().length > 0;
+      const tab = hasTabShape ? String(row[2] || "").trim() : "Guild League";
+      const status = String((hasTabShape ? row[3] : row[2]) || "").trim();
+      const pages = String((hasTabShape ? row[4] : row[3]) || "").trim();
+      const date = String((hasTabShape ? row[5] : row[4]) || "").trim();
       if (!ign || !reward || !date) {
         continue;
       }
       if (!byDate.has(date)) {
-        byDate.set(date, { LND: [], TNS: [], "Card Frag(Prio from Elite)": [] });
+        byDate.set(date, createEmptyAuctionTabs());
       }
-      if (reward === "LND" || reward === "TNS" || reward === "Card Frag(Prio from Elite)") {
-        byDate.get(date)[reward].push({ ign, status, pages });
+      const rewardKeys = expandAuctionDataRewardKeys(reward);
+      if (rewardKeys.length === 0) {
+        continue;
+      }
+
+      const tabKey = normalizeAuctionTab(tab);
+      const tabRows = byDate.get(date)?.[tabKey] || createEmptyRewardColumns();
+
+      const pagesByReward = splitAuctionDataPages(reward, pages);
+      for (const rewardKey of rewardKeys) {
+        tabRows[rewardKey].push({
+          ign,
+          status,
+          pages: pagesByReward[rewardKey] || pages,
+        });
       }
     }
     return byDate;
@@ -1099,26 +1516,35 @@ export default function HomePage() {
     dates.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
     return dates;
   }, [auctionRowsByDate]);
+  const hasTuesdayAuctionDate = useMemo(
+    () => orderedAuctionDates.some((date) => isTuesdayFromDateString(date)),
+    [orderedAuctionDates]
+  );
+  const hasThursdayAuctionDate = useMemo(
+    () => orderedAuctionDates.some((date) => isThursdayFromDateString(date)),
+    [orderedAuctionDates]
+  );
   const hasAuctionDataRecords = auctionDataRows.length > 0;
   const hasAuctionData = orderedAuctionDates.length > 0;
 
   const pendingRouletteByReward = useMemo(() => {
+    const featherColumnIndex = findColumnIndexByNames(columns, ["Feather"]);
     const rewardColumnIndexes = {
-      LND: findColumnIndexByNames(columns, ["LND", "Light and Dark"]),
-      TNS: findColumnIndexByNames(columns, ["TNS", "Time and Space"]),
-      "Card Frag(Prio from Elite)": findColumnIndexByNames(columns, ["Card Frag(Prio from Elite)", "Card Fragment", "Card Frag"]),
+      LND: featherColumnIndex >= 0 ? featherColumnIndex : findColumnIndexByNames(columns, ["LND", "Light and Dark"]),
+      TNS: featherColumnIndex >= 0 ? featherColumnIndex : findColumnIndexByNames(columns, ["TNS", "Time and Space"]),
+      "Card Fragment": findColumnIndexByNames(columns, ["Card Fragment", "Card Frag(Prio from Elite)", "Card Frag"]),
     };
 
     const rouletteByReward = createEmptyRewardColumns();
     const seenRouletteNames = {
       LND: new Set(),
       TNS: new Set(),
-      "Card Frag(Prio from Elite)": new Set(),
+      "Card Fragment": new Set(),
     };
 
     for (let i = 0; i < rows.length; i += 1) {
       const row = rows[i] || [];
-      for (const rewardKey of ["LND", "TNS", "Card Frag(Prio from Elite)"]) {
+      for (const rewardKey of ["LND", "TNS", "Card Fragment"]) {
         const columnIndex = rewardColumnIndexes[rewardKey];
         if (columnIndex < 0) {
           continue;
@@ -1139,15 +1565,17 @@ export default function HomePage() {
     for (let i = 0; i < auctionDataRows.length; i += 1) {
       const row = auctionDataRows[i] || [];
       const ign = String(row[0] || "").trim();
-      const rewardKey = normalizeRewardKey(row[1]);
-      if (!ign || !rewardKey) {
+      const rewardKeys = expandAuctionDataRewardKeys(row[1]);
+      if (!ign || rewardKeys.length === 0) {
         continue;
       }
-      existingAuctionEntries.add(`${rewardKey}::${ign.toLowerCase()}`);
+      for (const rewardKey of rewardKeys) {
+        existingAuctionEntries.add(`${rewardKey}::${ign.toLowerCase()}`);
+      }
     }
 
     const pending = createEmptyRewardColumns();
-    for (const rewardKey of ["LND", "TNS", "Card Frag(Prio from Elite)"]) {
+    for (const rewardKey of ["LND", "TNS", "Card Fragment"]) {
       pending[rewardKey] = rouletteByReward[rewardKey].filter(
         (ign) => !existingAuctionEntries.has(`${rewardKey}::${ign.toLowerCase()}`)
       );
@@ -1156,9 +1584,22 @@ export default function HomePage() {
     return pending;
   }, [auctionDataRows, columns, rows]);
 
+  const pendingFeatherPlayers = useMemo(() => {
+    const seen = new Set();
+    const combined = [];
+    for (const ign of [...pendingRouletteByReward.LND, ...pendingRouletteByReward.TNS]) {
+      const key = ign.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        combined.push(ign);
+      }
+    }
+    return combined;
+  }, [pendingRouletteByReward]);
+
   const pendingRouletteTotal = useMemo(
-    () => pendingRouletteByReward.LND.length + pendingRouletteByReward.TNS.length + pendingRouletteByReward["Card Frag(Prio from Elite)"].length,
-    [pendingRouletteByReward]
+    () => pendingFeatherPlayers.length + pendingRouletteByReward["Card Fragment"].length,
+    [pendingFeatherPlayers, pendingRouletteByReward]
   );
 
   const overrunRankOptions = useMemo(() => {
@@ -1182,11 +1623,63 @@ export default function HomePage() {
     return groupRewards[selectedOverrunRank] || null;
   }, [selectedOverrunGroup, selectedOverrunRank]);
 
+  const overrunFeatherPlayerCount = useMemo(() => {
+    const totalLnd = parseNonNegativeInteger((selectedOverrunRewards || {}).LND);
+    const totalTns = parseNonNegativeInteger((selectedOverrunRewards || {}).TNS);
+    const perPlayerLnd = Math.max(1, parseNonNegativeInteger((overrunRewardFields.LND || {}).perPlayer));
+    const perPlayerTns = Math.max(1, parseNonNegativeInteger((overrunRewardFields.TNS || {}).perPlayer));
+
+    if (totalLnd <= 0 || totalTns <= 0) {
+      return 0;
+    }
+
+    return Math.min(
+      Math.floor(totalLnd / perPlayerLnd),
+      Math.floor(totalTns / perPlayerTns)
+    );
+  }, [overrunRewardFields, selectedOverrunRewards]);
+
+  const overrunCardPlayerCount = useMemo(() => {
+    const totalCard = parseNonNegativeInteger((selectedOverrunRewards || {})["Card Fragment"]);
+    const perPlayerCard = Math.max(1, parseNonNegativeInteger((overrunRewardFields["Card Fragment"] || {}).perPlayer));
+    if (totalCard <= 0) {
+      return 0;
+    }
+
+    return Math.floor(totalCard / perPlayerCard);
+  }, [overrunRewardFields, selectedOverrunRewards]);
+
+  useEffect(() => {
+    if (!selectedOverrunRewards) {
+      return;
+    }
+
+    const totalLnd = parseNonNegativeInteger(selectedOverrunRewards.LND);
+    const totalTns = parseNonNegativeInteger(selectedOverrunRewards.TNS);
+    const bestPlayerCount = getBestOverrunFeatherPlayerCount(totalLnd, totalTns);
+    if (bestPlayerCount <= 0) {
+      return;
+    }
+
+    setOverrunRewardFields((current) => ({
+      ...current,
+      LND: {
+        ...(current.LND || { perPlayer: "1" }),
+        perPlayer: String(Math.max(1, Math.floor(totalLnd / bestPlayerCount))),
+      },
+      TNS: {
+        ...(current.TNS || { perPlayer: "1" }),
+        perPlayer: String(Math.max(1, Math.floor(totalTns / bestPlayerCount))),
+      },
+    }));
+  }, [selectedOverrunRewards]);
+
   const overrunSucceedingCardRaw = useMemo(() => {
-    const selectedCardAmount = Number((selectedOverrunRewards || {})["Card Frag(Prio from Elite)"] || 0);
-    const pendingCardPlayers = pendingRouletteByReward["Card Frag(Prio from Elite)"].length;
-    return Math.max(selectedCardAmount - pendingCardPlayers, 0);
-  }, [pendingRouletteByReward, selectedOverrunRewards]);
+    const selectedCardAmount = Number((selectedOverrunRewards || {})["Card Fragment"] || 0);
+    const perPlayerCard = Math.max(1, parseNonNegativeInteger((overrunRewardFields["Card Fragment"] || {}).perPlayer));
+    const pendingCardPlayers = pendingRouletteByReward["Card Fragment"].length;
+    return Math.max(Math.floor(selectedCardAmount / perPlayerCard) - pendingCardPlayers, 0);
+  }, [overrunRewardFields, pendingRouletteByReward, selectedOverrunRewards]);
 
   const overrunSucceedingCardRemaining = useMemo(
     () => overrunSucceedingCardRaw,
@@ -1235,6 +1728,9 @@ export default function HomePage() {
       gameId: overrunGameId,
       groupRanking: selectedOverrunGroup,
       guildRanking: selectedOverrunRank,
+      perPlayerLND: String(parseNonNegativeInteger((overrunRewardFields.LND || {}).perPlayer)),
+      perPlayerTNS: String(parseNonNegativeInteger((overrunRewardFields.TNS || {}).perPlayer)),
+      perPlayerCard: String(parseNonNegativeInteger((overrunRewardFields["Card Fragment"] || {}).perPlayer)),
       officerCardBenefit: officerCardBenefitEnabled ? "true" : "false",
       officerCardQuantity: String(officerCardBenefitEnabled ? selectedOfficerCardCount : 0),
       officerCardRecipients: officerCardBenefitEnabled ? JSON.stringify(selectedOfficerCardRecipients) : "[]",
@@ -1277,6 +1773,7 @@ export default function HomePage() {
     officerCardBenefitEnabled,
     overrunGameId,
     overrunOfficerIGN,
+    overrunRewardFields,
     selectedOfficerCardCount,
     selectedOfficerCardRecipients,
     selectedOverrunGroup,
@@ -1295,6 +1792,12 @@ export default function HomePage() {
   useEffect(() => {
     loadSheet();
   }, [loadSheet]);
+
+  useEffect(() => {
+    if (showRandomizerModal && hasTuesdayAuctionDate && selectedGLDay === "tuesday") {
+      setSelectedGLDay("thursday");
+    }
+  }, [hasTuesdayAuctionDate, selectedGLDay, showRandomizerModal]);
 
   return (
     <main className="shell">
@@ -1332,13 +1835,14 @@ export default function HomePage() {
               <div className="modal-field">
                 <label className="modal-label">Reward</label>
                 <SelectField
-                  options={REWARD_OPTIONS}
+                  options={INSERT_REWARD_OPTIONS}
                   value={selectedReward}
                   onChange={setSelectedReward}
                   placeholder="Select reward…"
                   searchPlaceholder="Search reward…"
                   toLabel={(option) => option.label}
                   toValue={(option) => option.value}
+                  toBadge={(option) => option.badge || option.value}
                 />
               </div>
 
@@ -1380,7 +1884,7 @@ export default function HomePage() {
         <div className="modal-overlay" onClick={handleCloseRandomizer}>
           <div className="modal-card modal-card--randomizer" onClick={(event) => event.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">Randomizer</h2>
+              <h2 className="modal-title">Generate Guild League Rewards</h2>
               <button type="button" className="modal-close" onClick={handleCloseRandomizer} aria-label="Close" disabled={isRandomizing}>✕</button>
             </div>
 
@@ -1419,17 +1923,15 @@ export default function HomePage() {
                 </div>
 
                 <div className="modal-field">
-                  <label className="modal-label" htmlFor="glTierSelect">Guild Tier</label>
+                  <label className="modal-label" htmlFor="glDaySelect">Day</label>
                   <select
-                    id="glTierSelect"
+                    id="glDaySelect"
                     className="modal-input modal-select"
-                    value={selectedGLTier}
-                    onChange={(event) => handleGLTierChange(event.target.value)}
+                    value={selectedGLDay}
+                    onChange={(event) => setSelectedGLDay(event.target.value)}
                   >
-                    <option value="">Select tier…</option>
-                    {GL_TIER_OPTIONS.map((tier) => (
-                      <option key={tier.value} value={tier.value}>{tier.label}</option>
-                    ))}
+                    <option value="thursday">Thursday</option>
+                    <option value="tuesday" disabled={hasTuesdayAuctionDate}>Tuesday</option>
                   </select>
                 </div>
 
@@ -1446,61 +1948,150 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="reward-fields-grid">
-                {REWARD_OPTIONS.map((reward) => {
-                  const rewardPerPlayer = parseNonNegativeInteger((rewardFields[reward.value] || {}).perPlayer);
-                  const winnerPerGLValue = (rewardFields[reward.value] || {}).winnerPerGL || "0";
-                  return (
-                    <div className="reward-fields-card" key={`config-${reward.value}`}>
-                      <h3>{reward.label}</h3>
-                      <div className="reward-fields-stat">
-                        <span className="reward-fields-stat-label">Winners per GL</span>
-                        <input
-                          className="modal-input reward-winner-input"
-                          inputMode="numeric"
-                          type="text"
-                          value={winnerPerGLValue}
-                          onChange={(event) => handleWinnerPerGLChange(reward.value, event.target.value)}
-                          placeholder="0"
-                        />
-                      </div>
-                      <p className="reward-fields-meta">
-                        Reward per player: {rewardPerPlayer}
-                      </p>
-                    </div>
-                  );
-                })}
+              <div className="randomizer-top-row randomizer-top-row--three">
+                <div className="modal-field">
+                  <label className="modal-label" htmlFor="glTierSelect">Guild Tier</label>
+                  <select
+                    id="glTierSelect"
+                    className="modal-input modal-select"
+                    value={selectedGLTier}
+                    onChange={(event) => handleGLTierChange(event.target.value)}
+                  >
+                    <option value="">Select tier…</option>
+                    {GL_TIER_OPTIONS.map((tier) => (
+                      <option key={tier.value} value={tier.value}>{tier.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="modal-field">
+                  <label className="modal-label" htmlFor="guildLeagueResult">Guild League Result</label>
+                  <select
+                    id="guildLeagueResult"
+                    className="modal-input modal-select"
+                    value={guildLeagueResult}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      setGuildLeagueResult(nextValue);
+                      if (nextValue !== "lost") {
+                        setPointDifference("3000");
+                      }
+                    }}
+                  >
+                    <option value="">Select result…</option>
+                    <option value="won">Won</option>
+                    <option value="lost">Lost</option>
+                  </select>
+                </div>
+
+                <div className="modal-field">
+                  <label className="modal-label" htmlFor="pointDifference">Point Difference</label>
+                  <input
+                    id="pointDifference"
+                    className="modal-input"
+                    inputMode="numeric"
+                    type="text"
+                    value={pointDifference}
+                    onChange={(event) => {
+                      if (/^\d*$/.test(event.target.value)) {
+                        setPointDifference(event.target.value);
+                      }
+                    }}
+                    placeholder="0"
+                    disabled={guildLeagueResult !== "lost"}
+                  />
+                </div>
               </div>
 
-              <div
-                className="randomizer-preview"
-                style={{ "--shuffle-duration": `${parsedAnimationSeconds}s` }}
-              >
-                {REWARD_OPTIONS.map((reward) => (
-                  <div className="random-col" key={reward.value}>
-                    <h3>{reward.label}</h3>
-                    <ol>
-                      {(displayedColumns[reward.value] || []).map((name, index) => {
-                        const winnerCount = getWinnerCount(reward.value);
-                        let highlightClass = "";
-                        if (index < winnerCount) {
-                          highlightClass = "random-tuesday";
-                        } else if (index < winnerCount * 2) {
-                          highlightClass = "random-thursday";
-                        }
-                        return (
-                          <li
-                            key={`${reward.value}-${name}-${index}`}
-                            className={highlightClass}
-                          >
-                            {name}
-                          </li>
-                        );
-                      })}
-                    </ol>
+              <div className="reward-fields-grid">
+                <div className="reward-fields-card" key="config-feather">
+                  <h3>Feather</h3>
+                  <div className="reward-fields-stat">
+                    <span className="reward-fields-stat-label">Purchase Limit (LND)</span>
+                    <input
+                      className="modal-input reward-winner-input"
+                      inputMode="numeric"
+                      type="text"
+                      value={parseNonNegativeInteger((rewardFields.LND || {}).perPlayer)}
+                      onChange={(event) => handlePurchaseLimitChange("LND", event.target.value)}
+                      placeholder="0"
+                    />
                   </div>
-                ))}
+                  <div className="reward-fields-stat">
+                    <span className="reward-fields-stat-label">Purchase Limit (TNS)</span>
+                    <input
+                      className="modal-input reward-winner-input"
+                      inputMode="numeric"
+                      type="text"
+                      value={parseNonNegativeInteger((rewardFields.TNS || {}).perPlayer)}
+                      onChange={(event) => handlePurchaseLimitChange("TNS", event.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                  <p className="reward-fields-meta">
+                    Total players to be reward: {displayedWinnerCounts.LND}
+                  </p>
+                </div>
+
+                <div className="reward-fields-card" key="config-card-fragment">
+                  <h3>Card Fragment</h3>
+                  <div className="reward-fields-stat">
+                    <span className="reward-fields-stat-label">Purchase Limit</span>
+                    <input
+                      className="modal-input reward-winner-input"
+                      inputMode="numeric"
+                      type="text"
+                      value={parseNonNegativeInteger((rewardFields["Card Fragment"] || {}).perPlayer)}
+                      onChange={(event) => handlePurchaseLimitChange("Card Fragment", event.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                  <p className="reward-fields-meta">
+                    Total players to be reward: {displayedWinnerCounts["Card Fragment"]}
+                  </p>
+                </div>
               </div>
+
+              {shouldShowPreviewAnimation && (
+                <>
+                  <h3 className="modal-section-title">Guild League Tab</h3>
+                  <div className="reward-fields-grid">
+                    <div className="reward-fields-card">
+                      <h3>Feather</h3>
+                      <ol className="reward-preview-list">
+                        {featherGuildLeaguePreview.length === 0 ? <li>-</li> : featherGuildLeaguePreview.map((name, index) => <li key={`gl-feather-${name}-${index}`}>{name}</li>)}
+                      </ol>
+                    </div>
+                    <div className="reward-fields-card">
+                      <h3>Card Fragment</h3>
+                      <ol className="reward-preview-list">
+                        {guildLeaguePreview["Card Fragment"].length === 0 ? <li>-</li> : guildLeaguePreview["Card Fragment"].map((name, index) => <li key={`gl-card-${name}-${index}`}>{name}</li>)}
+                      </ol>
+                    </div>
+                  </div>
+
+                  {shouldShowLeaguePrizeTab && (
+                    <>
+                      <h3 className="modal-section-title">League Prize Tab</h3>
+                      <div className="reward-fields-grid">
+                        <div className="reward-fields-card">
+                          <h3>Feather</h3>
+                          <ol className="reward-preview-list">
+                            {featherLeaguePrizePreview.length === 0 ? <li>-</li> : featherLeaguePrizePreview.map((name, index) => <li key={`lp-feather-${name}-${index}`}>{name}</li>)}
+                          </ol>
+                        </div>
+                        <div className="reward-fields-card">
+                          <h3>Card Fragment</h3>
+                          <ol className="reward-preview-list">
+                            {leaguePrizePreview["Card Fragment"].length === 0 ? <li>-</li> : leaguePrizePreview["Card Fragment"].map((name, index) => <li key={`lp-card-${name}-${index}`}>{name}</li>)}
+                          </ol>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
             </div>
 
             <div className="modal-footer modal-footer--between">
@@ -1519,9 +2110,9 @@ export default function HomePage() {
                   type="button"
                   className="btn-randomize"
                   onClick={handleRandomize}
-                  disabled={!selectedOfficerIGN || !randomizerGameId || isRandomizing}
+                  disabled={!selectedOfficerIGN || !randomizerGameId || !selectedGLTier || isRandomizing}
                 >
-                  {isRandomizing ? "Randomizing..." : "Trigger Randomizer"}
+                  {isRandomizing ? "Generating..." : "Generate Guild League Rewards"}
                 </button>
               </div>
             </div>
@@ -1670,39 +2261,41 @@ export default function HomePage() {
         <div className="modal-overlay" onClick={handleCloseOverrunModal}>
           <div className="modal-card" onClick={(event) => event.stopPropagation()}>
             <div className="modal-header">
-              <h2 className="modal-title">Set Overrun Rewards</h2>
+              <h2 className="modal-title">Generate Overrun Rewards</h2>
               <button type="button" className="modal-close" onClick={handleCloseOverrunModal} aria-label="Close" disabled={isGeneratingOverrun}>✕</button>
             </div>
 
             <div className="modal-body">
-              <div className="modal-field">
-                <label className="modal-label">Officer</label>
-                {isFetchingMembers ? (
-                  <div className="modal-loading">Loading officers…</div>
-                ) : (
-                  <SelectField
-                    options={officerOptions}
-                    value={overrunOfficerIGN}
-                    onChange={setOverrunOfficerIGN}
-                    placeholder={officerOptions.length > 0 ? "Officer" : "No officer roles found"}
-                    searchPlaceholder="Search officer IGN…"
-                    toLabel={(option) => option}
-                    toValue={(option) => option}
-                    disabled={officerOptions.length === 0}
-                  />
-                )}
-              </div>
+              <div className="randomizer-top-row randomizer-top-row--two">
+                <div className="modal-field">
+                  <label className="modal-label">Officer</label>
+                  {isFetchingMembers ? (
+                    <div className="modal-loading">Loading officers…</div>
+                  ) : (
+                    <SelectField
+                      options={officerOptions}
+                      value={overrunOfficerIGN}
+                      onChange={setOverrunOfficerIGN}
+                      placeholder={officerOptions.length > 0 ? "Officer" : "No officer roles found"}
+                      searchPlaceholder="Search officer IGN…"
+                      toLabel={(option) => option}
+                      toValue={(option) => option}
+                      disabled={officerOptions.length === 0}
+                    />
+                  )}
+                </div>
 
-              <div className="modal-field">
-                <label className="modal-label" htmlFor="overrunGameId">Game ID (password)</label>
-                <input
-                  id="overrunGameId"
-                  className="modal-input"
-                  type="password"
-                  value={overrunGameId}
-                  onChange={(event) => setOverrunGameId(event.target.value)}
-                  placeholder="Game ID"
-                />
+                <div className="modal-field">
+                  <label className="modal-label" htmlFor="overrunGameId">Game ID (password)</label>
+                  <input
+                    id="overrunGameId"
+                    className="modal-input"
+                    type="password"
+                    value={overrunGameId}
+                    onChange={(event) => setOverrunGameId(event.target.value)}
+                    placeholder="Game ID"
+                  />
+                </div>
               </div>
 
               <div className="overrun-rank-row">
@@ -1741,9 +2334,58 @@ export default function HomePage() {
                 </div>
               </div>
 
+              <div className="reward-fields-grid">
+                <div className="reward-fields-card" key="overrun-feather">
+                  <h3>Feather</h3>
+                  <div className="reward-fields-stat">
+                    <span className="reward-fields-stat-label">Purchase Limit (LND)</span>
+                    <input
+                      className="modal-input reward-winner-input"
+                      inputMode="numeric"
+                      type="text"
+                      value={parseNonNegativeInteger((overrunRewardFields.LND || {}).perPlayer)}
+                      onChange={(event) => handleOverrunPurchaseLimitChange("LND", event.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="reward-fields-stat">
+                    <span className="reward-fields-stat-label">Purchase Limit (TNS)</span>
+                    <input
+                      className="modal-input reward-winner-input"
+                      inputMode="numeric"
+                      type="text"
+                      value={parseNonNegativeInteger((overrunRewardFields.TNS || {}).perPlayer)}
+                      onChange={(event) => handleOverrunPurchaseLimitChange("TNS", event.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                  <p className="reward-fields-meta">
+                    Total players to be reward: {overrunFeatherPlayerCount}
+                  </p>
+                </div>
+
+                <div className="reward-fields-card" key="overrun-card-fragment">
+                  <h3>Card Fragment</h3>
+                  <div className="reward-fields-stat">
+                    <span className="reward-fields-stat-label">Purchase Limit</span>
+                    <input
+                      className="modal-input reward-winner-input"
+                      inputMode="numeric"
+                      type="text"
+                      value={parseNonNegativeInteger((overrunRewardFields["Card Fragment"] || {}).perPlayer)}
+                      onChange={(event) => handleOverrunPurchaseLimitChange("Card Fragment", event.target.value)}
+                      placeholder="0"
+                    />
+                  </div>
+                  <p className="reward-fields-meta">
+                    Total players to be reward: {overrunCardPlayerCount}
+                  </p>
+                </div>
+              </div>
+
               {selectedOverrunRewards && (
                 <p className="modal-note modal-note--tiny overrun-reward-preview">
-                  Rewards [LND/TNS/Card]: {selectedOverrunRewards.LND}/{selectedOverrunRewards.TNS}/{selectedOverrunRewards["Card Frag(Prio from Elite)"]}
+                  Rewards [LND/TNS/Card]: {selectedOverrunRewards.LND}/{selectedOverrunRewards.TNS}/{selectedOverrunRewards["Card Fragment"]}
                 </p>
               )}
 
@@ -1790,7 +2432,7 @@ export default function HomePage() {
                   Excess Card Fragment Remaining {selectedOfficerCardCount}/{overrunSucceedingCardRemaining}
                 </p>
                 <p className="modal-note modal-note--tiny">
-                  Based on selected group/rank and pending Card Fragment players: {pendingRouletteByReward["Card Frag(Prio from Elite)"].length}
+                  Based on selected group/rank and pending Card Fragment players: {pendingRouletteByReward["Card Fragment"].length}
                 </p>
               </div>
 
@@ -1851,9 +2493,9 @@ Guild members can submit their IGN for specific auction rewards, and the system 
                 Insert IGN
               </button>
             )}
-            {!hasAuctionDataRecords && (
+            {!hasThursdayAuctionDate && (
               <button type="button" className="btn-randomize" onClick={handleOpenRandomizer}>
-                Randomizer
+                Generate Guild League Rewards
               </button>
             )}
             <button type="button" className="btn-overrun" onClick={handleOpenOverrunModal}>
@@ -1871,7 +2513,14 @@ Guild members can submit their IGN for specific auction rewards, and the system 
             <div className="weekly-tables">
               {orderedAuctionDates.map((date) => {
                 const dayLabel = getDayLabelFromDateString(date);
-                const dayData = auctionRowsByDate.get(date) || createEmptyRewardColumns();
+                const dayTabs = auctionRowsByDate.get(date) || createEmptyAuctionTabs();
+                const isSunday = isSundayFromDateString(date);
+                const overrunData = isSunday ? (dayTabs["Emperium Overrun"] || createEmptyRewardColumns()) : createEmptyRewardColumns();
+                const overrunFeatherEntries = isSunday ? combineFeatherEntries(overrunData.LND, overrunData.TNS) : [];
+                const guildLeagueData = !isSunday ? (dayTabs["Guild League"] || createEmptyRewardColumns()) : createEmptyRewardColumns();
+                const leaguePrizeData = !isSunday ? (dayTabs["League Prize"] || createEmptyRewardColumns()) : createEmptyRewardColumns();
+                const guildLeagueFeatherEntries = !isSunday ? combineFeatherEntries(guildLeagueData.LND, guildLeagueData.TNS) : [];
+                const leaguePrizeFeatherEntries = !isSunday ? combineFeatherEntries(leaguePrizeData.LND, leaguePrizeData.TNS) : [];
                 return (
                   <div className="table-shell" key={`weekly-${date}-${dayLabel}`}>
                     <div className="table-title">
@@ -1888,52 +2537,170 @@ Guild members can submit their IGN for specific auction rewards, and the system 
                         <button
                           type="button"
                           className="table-title-btn table-title-btn--copy"
-                          onClick={() => handleCopyRewardData(dayData)}
+                          onClick={() => handleCopyRewardData(dayTabs, date)}
                         >
                           Copy
                         </button>
                       </div>
                     </div>
-                    <div className="table-scroll">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>Light and Dark</th>
-                            <th>Time and Space</th>
-                            <th>Card Fragment</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr>
-                            {["LND", "TNS", "Card Frag(Prio from Elite)"].map((rewardKey) => {
-                              const entries = dayData[rewardKey] || [];
-                              return (
-                                <td key={`${dayLabel}-${rewardKey}`}>
-                                  {entries.length === 0 ? (
-                                    <span className="table-cell-value">-</span>
-                                  ) : (
-                                    <ol className="reward-list">
-                                      {entries.map((entry, itemIndex) => {
-                                        const isUnclaimed = String(entry.status || "").toLowerCase() === "unclaimed";
-                                        return (
-                                          <li key={`${rewardKey}-${entry.ign}-${itemIndex}`}>
-                                            <span className="table-cell-value">{itemIndex + 1}. {entry.ign} {!isUnclaimed && (
-                                              <span className="reward-claimed" title="Claimed" aria-label="Claimed">🏆</span>
-                                            )}</span>
+                    {isSunday ? (
+                      <>
+                        <h4 className="table-subtitle">Emperium Overrun Tab</h4>
+                        <div className="table-scroll">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Feather</th>
+                                <th>Card Fragment</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                {[
+                                  { rewardKey: "Feather", entries: overrunFeatherEntries },
+                                  { rewardKey: "Card Fragment", entries: overrunData["Card Fragment"] || [] },
+                                ].map(({ rewardKey, entries }) => (
+                                  <td key={`${dayLabel}-overrun-${rewardKey}`}>
+                                    {entries.length === 0 ? (
+                                      <span className="table-cell-value">-</span>
+                                    ) : (
+                                      <ol className={`reward-list${rewardKey === "Feather" ? " reward-list--feather" : ""}`}>
+                                        {entries.map((entry, itemIndex) => {
+                                          const normalizedStatus = String(entry.status || "").toLowerCase();
+                                          const isUnclaimed = normalizedStatus === "unclaimed" || normalizedStatus === "unclaim";
+                                          if (rewardKey === "Feather") {
+                                            const lndUnclaimed = !entry.lndPages || ["unclaimed","unclaim"].includes(String(entry.lndStatus || "").toLowerCase());
+                                            const tnsUnclaimed = !entry.tnsPages || ["unclaimed","unclaim"].includes(String(entry.tnsStatus || "").toLowerCase());
+                                            const allUnclaimed = lndUnclaimed && tnsUnclaimed;
+                                            return (
+                                              <li key={`overrun-feather-${entry.ign}-${itemIndex}`}>
+                                                <span className="table-cell-value">{itemIndex + 1}. {entry.ign} {!allUnclaimed && <span className="reward-claimed" title="Claimed" aria-label="Claimed">🏆</span>}</span>
+                                                {entry.lndPages && <span className="reward-pages" style={lndUnclaimed ? undefined : { textDecoration: "line-through" }}>LND: {entry.lndPages}</span>}
+                                                {entry.tnsPages && <span className="reward-pages" style={tnsUnclaimed ? undefined : { textDecoration: "line-through" }}>TNS: {entry.tnsPages}</span>}
+                                              </li>
+                                            );
+                                          }
+                                          return (
+                                            <li key={`overrun-card-${entry.ign}-${itemIndex}`}>
+                                              <span className="table-cell-value">{itemIndex + 1}. {entry.ign} {!isUnclaimed && <span className="reward-claimed" title="Claimed" aria-label="Claimed">🏆</span>}</span>
+                                              <span className="reward-pages" style={isUnclaimed ? undefined : { textDecoration: "line-through" }}>{entry.pages}</span>
+                                            </li>
+                                          );
+                                        })}
+                                      </ol>
+                                    )}
+                                  </td>
+                                ))}
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <h4 className="table-subtitle">Guild League Tab</h4>
+                        <div className="table-scroll">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Feather</th>
+                                <th>Card Fragment</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                {[
+                                  { rewardKey: "Feather", entries: guildLeagueFeatherEntries },
+                                  { rewardKey: "Card Fragment", entries: guildLeagueData["Card Fragment"] || [] },
+                                ].map(({ rewardKey, entries }) => (
+                                  <td key={`${dayLabel}-gl-${rewardKey}`}>
+                                    {entries.length === 0 ? (
+                                      <span className="table-cell-value">-</span>
+                                    ) : (
+                                      <ol className={`reward-list${rewardKey === "Feather" ? " reward-list--feather" : ""}`}>
+                                        {entries.map((entry, itemIndex) => {
+                                          const normalizedStatus = String(entry.status || "").toLowerCase();
+                                          const isUnclaimed = normalizedStatus === "unclaimed" || normalizedStatus === "unclaim";
+                                          if (rewardKey === "Feather") {
+                                            const lndUnclaimed = !entry.lndPages || ["unclaimed","unclaim"].includes(String(entry.lndStatus || "").toLowerCase());
+                                            const tnsUnclaimed = !entry.tnsPages || ["unclaimed","unclaim"].includes(String(entry.tnsStatus || "").toLowerCase());
+                                            const allUnclaimed = lndUnclaimed && tnsUnclaimed;
+                                            return (
+                                              <li key={`gl-feather-${entry.ign}-${itemIndex}`}>
+                                                <span className="table-cell-value">{itemIndex + 1}. {entry.ign} {!allUnclaimed && <span className="reward-claimed" title="Claimed" aria-label="Claimed">🏆</span>}</span>
+                                                {entry.lndPages && <span className="reward-pages" style={lndUnclaimed ? undefined : { textDecoration: "line-through" }}>LND: {entry.lndPages}</span>}
+                                                {entry.tnsPages && <span className="reward-pages" style={tnsUnclaimed ? undefined : { textDecoration: "line-through" }}>TNS: {entry.tnsPages}</span>}
+                                              </li>
+                                            );
+                                          }
+                                          return (
+                                            <li key={`gl-card-${entry.ign}-${itemIndex}`}>
+                                              <span className="table-cell-value">{itemIndex + 1}. {entry.ign} {!isUnclaimed && <span className="reward-claimed" title="Claimed" aria-label="Claimed">🏆</span>}</span>
+                                              <span className="reward-pages" style={isUnclaimed ? undefined : { textDecoration: "line-through" }}>{entry.pages}</span>
+                                            </li>
+                                          );
+                                        })}
+                                      </ol>
+                                    )}
+                                  </td>
+                                ))}
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
 
-                                            <span className="reward-pages" style={isUnclaimed ? undefined : { textDecoration: "line-through" }}>{entry.pages}</span>
-                                          </li>
-                                        );
-                                      })}
-                                    </ol>
-                                  )}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
+                        <h4 className="table-subtitle">League Prize Tab</h4>
+                        <div className="table-scroll">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Feather</th>
+                                <th>Card Fragment</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                {[
+                                  { rewardKey: "Feather", entries: leaguePrizeFeatherEntries },
+                                  { rewardKey: "Card Fragment", entries: leaguePrizeData["Card Fragment"] || [] },
+                                ].map(({ rewardKey, entries }) => (
+                                  <td key={`${dayLabel}-lp-${rewardKey}`}>
+                                    {entries.length === 0 ? (
+                                      <span className="table-cell-value">-</span>
+                                    ) : (
+                                      <ol className={`reward-list${rewardKey === "Feather" ? " reward-list--feather" : ""}`}>
+                                        {entries.map((entry, itemIndex) => {
+                                          const normalizedStatus = String(entry.status || "").toLowerCase();
+                                          const isUnclaimed = normalizedStatus === "unclaimed" || normalizedStatus === "unclaim";
+                                          if (rewardKey === "Feather") {
+                                            const lndUnclaimed = !entry.lndPages || ["unclaimed","unclaim"].includes(String(entry.lndStatus || "").toLowerCase());
+                                            const tnsUnclaimed = !entry.tnsPages || ["unclaimed","unclaim"].includes(String(entry.tnsStatus || "").toLowerCase());
+                                            const allUnclaimed = lndUnclaimed && tnsUnclaimed;
+                                            return (
+                                              <li key={`lp-feather-${entry.ign}-${itemIndex}`}>
+                                                <span className="table-cell-value">{itemIndex + 1}. {entry.ign} {!allUnclaimed && <span className="reward-claimed" title="Claimed" aria-label="Claimed">🏆</span>}</span>
+                                                {entry.lndPages && <span className="reward-pages" style={lndUnclaimed ? undefined : { textDecoration: "line-through" }}>LND: {entry.lndPages}</span>}
+                                                {entry.tnsPages && <span className="reward-pages" style={tnsUnclaimed ? undefined : { textDecoration: "line-through" }}>TNS: {entry.tnsPages}</span>}
+                                              </li>
+                                            );
+                                          }
+                                          return (
+                                            <li key={`lp-card-${entry.ign}-${itemIndex}`}>
+                                              <span className="table-cell-value">{itemIndex + 1}. {entry.ign} {!isUnclaimed && <span className="reward-claimed" title="Claimed" aria-label="Claimed">🏆</span>}</span>
+                                              <span className="reward-pages" style={isUnclaimed ? undefined : { textDecoration: "line-through" }}>{entry.pages}</span>
+                                            </li>
+                                          );
+                                        })}
+                                      </ol>
+                                    )}
+                                  </td>
+                                ))}
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
+                    )}
                   </div>
                 );
               })}
@@ -1942,23 +2709,23 @@ Guild members can submit their IGN for specific auction rewards, and the system 
             <div className="pending-reward-shell">
               <div className="pending-reward-title">Players Not Yet in Auction Data [{pendingRouletteTotal}]</div>
               <div className="pending-reward-grid">
-                {REWARD_OPTIONS.map((reward) => {
-                  const entries = pendingRouletteByReward[reward.value] || [];
-                  return (
-                    <div className="pending-reward-card" key={`pending-${reward.value}`}>
-                      <h3>{reward.label}</h3>
-                      {entries.length === 0 ? (
-                        <p className="pending-reward-empty">-</p>
-                      ) : (
-                        <ol>
-                          {entries.map((ign, index) => (
-                            <li key={`${reward.value}-${ign}-${index}`}>{ign}</li>
-                          ))}
-                        </ol>
-                      )}
-                    </div>
-                  );
-                })}
+                {[
+                  { label: "Feather", entries: pendingFeatherPlayers, key: "feather" },
+                  { label: "Card Fragment", entries: pendingRouletteByReward["Card Fragment"] || [], key: "card-fragment" },
+                ].map(({ label, entries, key }) => (
+                  <div className="pending-reward-card" key={`pending-${key}`}>
+                    <h3>{label}</h3>
+                    {entries.length === 0 ? (
+                      <p className="pending-reward-empty">-</p>
+                    ) : (
+                      <ol>
+                        {entries.map((ign, index) => (
+                          <li key={`${key}-${ign}-${index}`}>{ign}</li>
+                        ))}
+                      </ol>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </>

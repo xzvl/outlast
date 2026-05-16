@@ -387,6 +387,20 @@ button:disabled {
   background: linear-gradient(135deg, #2f4a9f, #22377a);
 }
 
+.table-subtitle {
+  padding: 15px 14px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #183f30;
+  margin: 0;
+  border-radius: 0;
+  background-color: #dac6a1;
+  border: 0;
+}
+
 .copy-toast {
   position: fixed;
   right: 18px;
@@ -446,9 +460,21 @@ tbody td {
   gap: 10px;
 }
 
+.reward-list--feather {
+  display: block;
+  column-count: 2;
+  column-gap: 18px;
+}
+
 .reward-list li {
   display: grid;
   gap: 4px;
+}
+
+.reward-list--feather li {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  margin-bottom: 10px;
 }
 
 .reward-pages {
@@ -596,6 +622,10 @@ tbody tr:last-child td {
 
   table {
     min-width: 520px;
+  }
+
+  .reward-list--feather {
+    column-count: 2;
   }
 
   .pending-reward-grid {
@@ -764,9 +794,22 @@ tbody tr:last-child td {
   gap: 12px;
 }
 
+.randomizer-top-row--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.randomizer-top-row--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.modal-section-title {
+  margin: 8px 0 2px;
+  font-size: 0.95rem;
+  color: #1f6a52;
+}
+
 .reward-fields-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -950,6 +993,23 @@ tbody tr:last-child td {
   color: var(--muted);
 }
 
+.reward-preview-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.reward-preview-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+}
+
+.reward-preview-list li {
+  animation: shufflePop var(--shuffle-duration, 1s) ease;
+}
+
 .randomizer-preview {
   margin-top: 6px;
   display: grid;
@@ -1012,6 +1072,11 @@ tbody tr:last-child td {
 @media (max-width: 900px) {
   .randomizer-top-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .randomizer-top-row--three,
+  .randomizer-top-row--two {
+    grid-template-columns: 1fr;
   }
 
   .overrun-rank-row {
