@@ -356,7 +356,7 @@ function handleGenerateOverrunRewards(params) {
         return String(part || "").trim().length > 0 && !String(part || "").match(/^(LND|TNS):\s*$/);
       }).join(" | ");
       if (freeForAllPageText.trim().length > 0) {
-        sundayRows.push(["FREE FOR ALL - " + freeForAllCounter, "Feather", "Emperium Overrun", "Unclaim", freeForAllPageText, sundayDate]);
+        sundayRows.push(["To be announce - " + freeForAllCounter, "Feather", "Emperium Overrun", "Unclaim", freeForAllPageText, sundayDate]);
         freeForAllCounter += 1;
       }
     }
@@ -365,7 +365,7 @@ function handleGenerateOverrunRewards(params) {
   var freeForAllCardLeftover = Number(distribution.leftoverByReward["Card Fragment"] || 0);
   while (freeForAllCardLeftover > 0) {
     var cardChunk = Math.min(perPlayerCounts["Card Fragment"], freeForAllCardLeftover);
-    sundayRows.push(["FREE FOR ALL - " + freeForAllCounter, "Card", "Emperium Overrun", "Unclaim", computePageString(cardSlot, cardSlot + cardChunk - 1), sundayDate]);
+    sundayRows.push(["To be announce - " + freeForAllCounter, "Card", "Emperium Overrun", "Unclaim", computePageString(cardSlot, cardSlot + cardChunk - 1), sundayDate]);
     cardSlot += cardChunk;
     freeForAllCardLeftover -= cardChunk;
     freeForAllCounter += 1;

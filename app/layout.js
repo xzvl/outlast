@@ -14,7 +14,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata = {
-  title: "ROOC Auction Roulette Viewer",
+  title: "ROOC Outlast - Auction System",
   description: "Live Google Sheets-powered table with fast filtering and sorting."
 };
 
