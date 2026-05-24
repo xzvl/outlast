@@ -613,6 +613,7 @@ export default function HomePage() {
   const [showInsertModal, setShowInsertModal] = useState(false);
   const [showChangeModal, setShowChangeModal] = useState(false);
   const [memberOptions, setMemberOptions] = useState([]);
+  const [changeMemberOptions, setChangeMemberOptions] = useState([]);
   const [isFetchingMembers, setIsFetchingMembers] = useState(false);
   const [selectedIGN, setSelectedIGN] = useState("");
   const [selectedReward, setSelectedReward] = useState("");
@@ -698,6 +699,7 @@ export default function HomePage() {
       );
 
       setMemberOptions(filteredMemberOptions);
+      setChangeMemberOptions(pending.memberOptions);
       setOfficerOptions(pending.officerNames);
       setIsFetchingMembers(false);
     };
@@ -2000,7 +2002,7 @@ export default function HomePage() {
                   <div className="modal-loading">Loading members…</div>
                 ) : (
                   <SelectField
-                    options={memberOptions}
+                    options={changeMemberOptions}
                     value={selectedChangeIGN}
                     onChange={setSelectedChangeIGN}
                     placeholder="Select IGN…"
