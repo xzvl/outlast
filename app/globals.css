@@ -196,19 +196,6 @@ h1 {
   margin-bottom: 18px;
 }
 
-.roc-title {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.62);
-  font-size: 0.9rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
 .search-wrap {
   flex: 1 1 280px;
   display: flex;
@@ -604,7 +591,6 @@ tbody tr:last-child td {
     grid-template-columns: 1fr;
   }
 
-  .roc-title,
   .button-row,
   .controls {
     width: 100%;
@@ -634,6 +620,15 @@ tbody tr:last-child td {
 }
 
 /* ── Insert IGN button ── */
+.btn-change {
+  background: linear-gradient(135deg, #2f7f57, #1f6342);
+  box-shadow: 0 10px 24px rgba(31, 106, 82, 0.26);
+}
+
+.btn-change:hover {
+  box-shadow: 0 14px 28px rgba(31, 106, 82, 0.32);
+}
+
 .btn-insert {
   background: linear-gradient(135deg, var(--brand), #165940);
   box-shadow: 0 10px 24px rgba(31, 106, 82, 0.26);

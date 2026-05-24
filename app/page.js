@@ -12,7 +12,7 @@ const MEMBERS_SHEET_NAME = "ROOC Members Data";
 const MEMBERS_DATA_GID = "114714217";
 const TRIGGER_SHEET_GID = "1887602829";
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoroaekJCwtuOnBDXsaglSCxY2moO645IjdCx05Fr0H_2xSUk9d0coFat_LgCWR_LIaQ/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwuAN32PCUIf1IBl_TLro32XGdpN9BBqobrVpxBn6XBMJwZuLeuYuy-_g1Bfugo8cRSKA/exec";
 
 const REWARD_OPTIONS = [
   { label: "Light and Dark", value: "LND" },
@@ -23,6 +23,28 @@ const REWARD_OPTIONS = [
 const INSERT_REWARD_OPTIONS = [
   { label: "Feather", value: "Feather", badge: "LND and TNS" },
   { label: "Card Fragment", value: "Card Fragment", badge: "Card Fragment" },
+];
+
+const CHANGE_FIELD_OPTIONS = [
+  { label: "IGN", value: "ign" },
+  { label: "Job", value: "job" },
+];
+
+const CHANGE_CLASS_OPTIONS = [
+  { label: "Lord Knight", value: "Lord Knight" },
+  { label: "Paladin", value: "Paladin" },
+  { label: "High Priest", value: "High Priest" },
+  { label: "Champion", value: "Champion" },
+  { label: "Assassin Cross", value: "Assassin Cross" },
+  { label: "Stalker", value: "Stalker" },
+  { label: "Whitesmith", value: "Whitesmith" },
+  { label: "Biochemist", value: "Biochemist" },
+  { label: "Sniper", value: "Sniper" },
+  { label: "Minstrel", value: "Minstrel" },
+  { label: "Gypsy", value: "Gypsy" },
+  { label: "High Wizard", value: "High Wizard" },
+  { label: "Professor", value: "Professor" },
+  { label: "Summoner", value: "Summoner" },
 ];
 
 const PER_PLAYER_DEFAULTS = {
@@ -589,6 +611,7 @@ export default function HomePage() {
   const [lastShuffledAt, setLastShuffledAt] = useState("Shuffled last [-]");
 
   const [showInsertModal, setShowInsertModal] = useState(false);
+  const [showChangeModal, setShowChangeModal] = useState(false);
   const [memberOptions, setMemberOptions] = useState([]);
   const [isFetchingMembers, setIsFetchingMembers] = useState(false);
   const [selectedIGN, setSelectedIGN] = useState("");
@@ -596,6 +619,13 @@ export default function HomePage() {
   const [insertGameId, setInsertGameId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitResult, setSubmitResult] = useState(null);
+  const [selectedChangeIGN, setSelectedChangeIGN] = useState("");
+  const [selectedChangeField, setSelectedChangeField] = useState("");
+  const [newChangeIGN, setNewChangeIGN] = useState("");
+  const [newChangeClass, setNewChangeClass] = useState("");
+  const [changeGameId, setChangeGameId] = useState("");
+  const [isChanging, setIsChanging] = useState(false);
+  const [changeResult, setChangeResult] = useState(null);
 
   const [showRandomizerModal, setShowRandomizerModal] = useState(false);
   const [officerOptions, setOfficerOptions] = useState([]);
@@ -699,14 +729,21 @@ export default function HomePage() {
         for (let i = 0; i < dataRows.length; i += 1) {
           const row = dataRows[i] || [];
           const ign = String(row[ignIndex] || "").trim();
+          const badge = String(row[badgeIndex] || "").trim();
+          const normalizedBadge = badge.toLowerCase().replace(/[^a-z0-9]/g, "");
+          const isExMember = normalizedBadge.includes("exmember");
           if (!ign || seenIgn.has(ign.toLowerCase())) {
+            continue;
+          }
+
+          if (isExMember) {
             continue;
           }
 
           seenIgn.add(ign.toLowerCase());
           nextOptions.push({
             ign,
-            badge: String(row[badgeIndex] || "").trim(),
+            badge,
           });
         }
 
@@ -854,6 +891,24 @@ export default function HomePage() {
     fetchMembersData();
   }, [fetchMembersData]);
 
+  const handleOpenChange = useCallback(() => {
+    setShowChangeModal(true);
+    setSelectedChangeIGN("");
+    setSelectedChangeField("");
+    setNewChangeIGN("");
+    setNewChangeClass("");
+    setChangeGameId("");
+    setChangeResult(null);
+    fetchMembersData();
+  }, [fetchMembersData]);
+
+  const handleCloseChange = useCallback(() => {
+    if (isChanging) {
+      return;
+    }
+    setShowChangeModal(false);
+  }, [isChanging]);
+
   const handleCloseInsert = useCallback(() => {
     if (isSubmitting) {
       return;
@@ -905,6 +960,57 @@ export default function HomePage() {
         setSubmitResult({ type: "error", message: `Request failed: ${error.message}. Make sure the Apps Script URL is valid and deployed as Anyone.` });
       });
   }, [insertGameId, isSubmitting, loadSheet, selectedIGN, selectedReward]);
+
+  const handleSubmitChange = useCallback(() => {
+    const requiresIgn = selectedChangeField === "ign";
+    const requiresJob = selectedChangeField === "job";
+    const hasChangeValue = (requiresIgn && newChangeIGN.trim()) || (requiresJob && newChangeClass);
+
+    if (!selectedChangeIGN || !selectedChangeField || !changeGameId || !hasChangeValue || isChanging) {
+      return;
+    }
+
+    if (!APPS_SCRIPT_URL) {
+      setChangeResult({ type: "error", message: "APPS_SCRIPT_URL is not set in page.js." });
+      return;
+    }
+
+    setIsChanging(true);
+    setChangeResult(null);
+
+    const params = new URLSearchParams({
+      action: "changeIgnJob",
+      ign: selectedChangeIGN,
+      changeType: selectedChangeField,
+      newIgn: newChangeIGN.trim(),
+      newClass: newChangeClass,
+      gameId: changeGameId,
+    });
+
+    fetch(`${APPS_SCRIPT_URL}?${params.toString()}`, { redirect: "follow" })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        setIsChanging(false);
+        if (data.success) {
+          setChangeResult({ type: "success", message: "Member record updated successfully." });
+          setTimeout(() => {
+            setShowChangeModal(false);
+            loadSheet();
+          }, 1200);
+        } else {
+          setChangeResult({ type: "error", message: data.error || "An error occurred while updating member data." });
+        }
+      })
+      .catch((error) => {
+        setIsChanging(false);
+        setChangeResult({ type: "error", message: `Request failed: ${error.message}. Make sure the Apps Script URL is valid and deployed as Anyone.` });
+      });
+  }, [changeGameId, isChanging, loadSheet, newChangeClass, newChangeIGN, selectedChangeField, selectedChangeIGN]);
 
   const handleGLTierChange = useCallback((tierValue) => {
     setSelectedGLTier(tierValue);
@@ -1880,6 +1986,121 @@ export default function HomePage() {
         </div>
       )}
 
+      {showChangeModal && (
+        <div className="modal-overlay" onClick={handleCloseChange}>
+          <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="modal-title">Change IGN/Job</h2>
+              <button type="button" className="modal-close" onClick={handleCloseChange} aria-label="Close" disabled={isChanging}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="modal-field">
+                <label className="modal-label">IGN</label>
+                {isFetchingMembers ? (
+                  <div className="modal-loading">Loading members…</div>
+                ) : (
+                  <SelectField
+                    options={memberOptions}
+                    value={selectedChangeIGN}
+                    onChange={setSelectedChangeIGN}
+                    placeholder="Select IGN…"
+                    searchPlaceholder="Search IGN…"
+                    toLabel={(option) => option.ign}
+                    toValue={(option) => option.ign}
+                    toBadge={(option) => option.badge || "-"}
+                  />
+                )}
+              </div>
+
+              <div className="modal-field">
+                <label className="modal-label">Change</label>
+                <SelectField
+                  options={CHANGE_FIELD_OPTIONS}
+                  value={selectedChangeField}
+                  onChange={(nextValue) => {
+                    setSelectedChangeField(nextValue);
+                    setNewChangeIGN("");
+                    setNewChangeClass("");
+                  }}
+                  placeholder="Select to update.."
+                  searchPlaceholder="Search field…"
+                  toLabel={(option) => option.label}
+                  toValue={(option) => option.value}
+                  toBadge={(option) => option.value.toUpperCase()}
+                />
+              </div>
+
+              {selectedChangeField === "ign" && (
+                <div className="modal-field">
+                  <label className="modal-label" htmlFor="newChangeIgn">New IGN</label>
+                  <input
+                    id="newChangeIgn"
+                    className="modal-input"
+                    type="text"
+                    value={newChangeIGN}
+                    onChange={(event) => setNewChangeIGN(event.target.value)}
+                    placeholder="Enter New IGN"
+                  />
+                </div>
+              )}
+
+              {selectedChangeField === "job" && (
+                <div className="modal-field">
+                  <label className="modal-label">New Class</label>
+                  <SelectField
+                    options={CHANGE_CLASS_OPTIONS}
+                    value={newChangeClass}
+                    onChange={setNewChangeClass}
+                    placeholder="Select class…"
+                    searchPlaceholder="Search class…"
+                    toLabel={(option) => option.label}
+                    toValue={(option) => option.value}
+                    toBadge={() => "Class"}
+                  />
+                </div>
+              )}
+
+              <div className="modal-field">
+                <label className="modal-label" htmlFor="changeGameId">Game ID (required)</label>
+                <input
+                  id="changeGameId"
+                  className="modal-input"
+                  type="password"
+                  value={changeGameId}
+                  onChange={(event) => setChangeGameId(event.target.value)}
+                  placeholder="Enter your Game ID"
+                />
+              </div>
+
+              {changeResult && (
+                <div className={`modal-result modal-result--${changeResult.type}`}>
+                  {changeResult.message}
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-cancel" onClick={handleCloseChange} disabled={isChanging}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitChange}
+                disabled={
+                  !selectedChangeIGN
+                  || !selectedChangeField
+                  || !changeGameId
+                  || (selectedChangeField === "ign" && !newChangeIGN.trim())
+                  || (selectedChangeField === "job" && !newChangeClass)
+                  || isChanging
+                }
+              >
+                {isChanging ? "Submitting..." : "Submit"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showRandomizerModal && (
         <div className="modal-overlay" onClick={handleCloseRandomizer}>
           <div className="modal-card modal-card--randomizer" onClick={(event) => event.stopPropagation()}>
@@ -2486,12 +2707,16 @@ Guild members can submit their IGN for specific auction rewards, and the system 
 
       <section className="panel">
         <div className="controls">
-          <div className="roc-title">Ragnarok Origin Classic</div>
           <div className="button-row">
             {!hasAuctionDataRecords && (
-              <button type="button" className="btn-insert" onClick={handleOpenInsert}>
-                Insert IGN
-              </button>
+              <>
+                <button type="button" className="btn-change" onClick={handleOpenChange}>
+                  Change IGN/Job
+                </button>
+                <button type="button" className="btn-insert" onClick={handleOpenInsert}>
+                  Insert IGN
+                </button>
+              </>
             )}
             {!hasThursdayAuctionDate && (
               <button type="button" className="btn-randomize" onClick={handleOpenRandomizer}>

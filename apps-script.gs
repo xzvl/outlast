@@ -5,6 +5,9 @@
  * - action=insertIgn
  *   params: ign, reward, gameId
  *
+ * - action=changeIgnJob
+ *   params: ign, changeType, newIgn, newClass, gameId
+ *
  * - action=randomize
  *   params: triggerIgn, gameId, timerSeconds
  */
@@ -64,6 +67,8 @@ function doGet(e) {
 
     if (action === "insertIgn") {
       result = handleInsertIgn(e.parameter);
+    } else if (action === "changeIgnJob") {
+      result = handleChangeIgnJob(e.parameter);
     } else if (action === "randomize") {
       result = handleRandomize(e.parameter);
     } else if (action === "clearAuctionData") {
@@ -73,7 +78,7 @@ function doGet(e) {
     } else if (action === "claimAuctionDate") {
       result = handleClaimAuctionDate(e.parameter);
     } else {
-      result = { error: "Invalid action. Use action=insertIgn, action=randomize, action=clearAuctionData, action=generateOverrunRewards, or action=claimAuctionDate." };
+      result = { error: "Invalid action. Use action=insertIgn, action=changeIgnJob, action=randomize, action=clearAuctionData, action=generateOverrunRewards, or action=claimAuctionDate." };
     }
   } catch (err) {
     result = { error: err.message || String(err) };
@@ -636,6 +641,78 @@ function handleInsertIgn(params) {
   };
 }
 
+function handleChangeIgnJob(params) {
+  var ign = (params.ign || "").trim();
+  var changeType = String(params.changeType || "").trim().toLowerCase();
+  var newIgn = (params.newIgn || "").trim();
+  var newClass = (params.newClass || "").trim();
+  var gameId = (params.gameId || "").trim();
+
+  if (!ign || !changeType || !gameId) {
+    return { error: "Missing ign, changeType, or gameId parameter." };
+  }
+
+  if (changeType !== "ign" && changeType !== "job") {
+    return { error: "Invalid changeType. Use ign or job." };
+  }
+
+  if (changeType === "ign" && !newIgn) {
+    return { error: "Missing newIgn parameter." };
+  }
+
+  if (changeType === "job" && !newClass) {
+    return { error: "Missing newClass parameter." };
+  }
+
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var membersSheet = ss.getSheetByName(MEMBERS_SHEET_NAME);
+
+  if (!membersSheet) {
+    return { error: "Sheet \"" + MEMBERS_SHEET_NAME + "\" not found." };
+  }
+
+  var memberCheck = validateOrSaveMemberGameIdByIgn(membersSheet, ign, gameId);
+  if (!memberCheck.success) {
+    return { error: memberCheck.error };
+  }
+
+  var targetRow = findMemberRowByIgn(membersSheet, ign);
+  if (targetRow === -1) {
+    return { error: "IGN not found in ROOC Members Data." };
+  }
+
+  if (changeType === "ign") {
+    var newIgnRow = findMemberRowByIgn(membersSheet, newIgn);
+    if (newIgnRow !== -1 && newIgnRow !== targetRow) {
+      return { error: "New IGN already exists in ROOC Members Data." };
+    }
+
+    membersSheet.getRange(targetRow, 5).setValue(ign);
+    membersSheet.getRange(targetRow, 1).setValue(newIgn);
+
+    SpreadsheetApp.flush();
+    return {
+      success: true,
+      changeType: "ign",
+      previousIgn: ign,
+      updatedIgn: newIgn,
+      row: targetRow,
+      gameIdStored: memberCheck.gameIdStored,
+    };
+  }
+
+  membersSheet.getRange(targetRow, 3).setValue(newClass);
+  SpreadsheetApp.flush();
+  return {
+    success: true,
+    changeType: "job",
+    ign: ign,
+    updatedClass: newClass,
+    row: targetRow,
+    gameIdStored: memberCheck.gameIdStored,
+  };
+}
+
 function validateOrSaveMemberGameIdByIgn(membersSheet, ign, inputGameId) {
   var lastRow = membersSheet.getLastRow();
   if (lastRow < 1) {
@@ -674,6 +751,33 @@ function validateOrSaveMemberGameIdByIgn(membersSheet, ign, inputGameId) {
   }
 
   return { success: true, gameIdStored: false };
+}
+
+function findMemberRowByIgn(membersSheet, ign) {
+  var lastRow = membersSheet.getLastRow();
+  if (lastRow < 1) {
+    return -1;
+  }
+
+  var values = membersSheet.getRange(1, 1, lastRow, 1).getValues();
+  var startRow = 1;
+  if (values.length > 0 && String(values[0][0] || "").trim().toLowerCase() === "ign") {
+    startRow = 2;
+  }
+
+  var targetIgn = String(ign || "").trim().toLowerCase();
+  if (!targetIgn) {
+    return -1;
+  }
+
+  for (var i = startRow - 1; i < values.length; i++) {
+    var rowIgn = String(values[i][0] || "").trim().toLowerCase();
+    if (rowIgn && rowIgn === targetIgn) {
+      return i + 1;
+    }
+  }
+
+  return -1;
 }
 
 function handleRandomize(params) {
